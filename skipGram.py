@@ -36,7 +36,7 @@ def loadPairs(path):
     pairs = zip(data['word1'],data['word2'],data['similarity'])
     return pairs
 
-
+## generating vocabulary from the data
 sentences = text2sentences(sent)
 vocabulary = []
 
@@ -45,8 +45,12 @@ for sentence in sentences:
         if token not in vocabulary:
             vocabulary.append(token)
 
+# counting words occurences
 word2idx = {w: idx for (idx, w) in enumerate(vocabulary)}
 idx2word = {idx: w for (idx, w) in enumerate(vocabulary)}
+
+print(word2idx['cat'])
+print(idx2word[2276])
 
 class SkipGram:
     def __init__(self,sentences, nEmbed=100, negativeRate=5, winSize = 5, minCount = 5):
