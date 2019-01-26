@@ -56,6 +56,7 @@ print(idx2word[2276])
 window_size = 2 #context windows - exploration around the center word
 idx_pairs = []
 # for each sentence
+
 for sentence in sentences:
     indices = [word2idx[word] for word in sentence]
     # for each word as center word
@@ -78,6 +79,22 @@ idx_pairs = np.array(idx_pairs) #pairs of (center word, context word)
 # nominator : exp(u_c'v_w) is the similarity score of a pair (c,w)
 # denominator : sum(cont in context) of exp(u_cont'v_w)
 
+sentence = sentences[48] 
+#['2', 'children', 'riding', 'swings', 'at', 'the', 'fair']
+#  building center word and context word vectors by one hot encoding
+n = len(sentence)
+center = np.zeros((n,n))
+for i in range(n):
+    vec = np.zeros(len(sentence))
+    vec[i] = 1
+    center[i] = vec
+
+lw = 2*window_size
+context = np.zeros((n,lw,n))
+for i in range(len(idx_pairs)):
+    context[indices.index(idx_pairs[i,0]),] = center[indices.index(idx_pairs[i,1])]
+    
+
 def softmax(x):
     """Calculate softmax based probability for given input vector
     # Arguments
@@ -88,56 +105,6 @@ def softmax(x):
     e_x = np.exp(x)
     return e_x / e_x.sum(axis=0)
 
-def to_categorical(y, num_classes=None):
-    """Converts a class vector (integers) to binary class matrix.
-    E.g. for use with categorical_crossentropy.
-    # Arguments
-        y: class vector to be converted into a matrix
-            (integers from 0 to num_classes).
-        num_classes: total number of classes.
-    # Returns
-        A binary matrix representation of the input.
-    """
-    y = np.array(y, dtype='int')
-    input_shape = y.shape
-    if input_shape and input_shape[-1] == 1 and len(input_shape) > 1:
-        input_shape = tuple(input_shape[:-1])
-    y = y.ravel()
-    if not num_classes:
-        num_classes = np.max(y) + 1
-    n = y.shape[0]
-    categorical = np.zeros((n, num_classes))
-    categorical[np.arange(n), y] = 1
-    output_shape = input_shape + (num_classes,)
-    categorical = np.reshape(categorical, output_shape)
-    return categorical
-
-def corpus2io(corpus_tokenized, V, window_size):
-    """Converts corpus text into context and center words
-    # Arguments
-        corpus_tokenized: corpus text
-        window_size: size of context window
-    # Returns
-        context and center words (arrays)
-    """
-    for words in corpus_tokenized:
-        L = len(words)
-        for index, word in enumerate(words):
-            contexts = []
-            labels = []
-            s = index - window_size
-            e = index + window_size + 1
-            contexts.append([words[i]-1 for i in range(s, e) if 0 <= i < L and i != index])
-            labels.append(word-1)
-            x = np_utils.to_categorical(contexts, V)
-            y = np_utils.to_categorical(labels, V)
-            yield (x, y.ravel())
-
-window_size = 2
-s = sentences[3]
-V = len(s)
-for i, (x, y) in enumerate(corpus2io(s, V, window_size)):
-    print(i, "\n center word =", y, "\n context words =\n",x)
 
 class SkipGram:
     def __init__(self,sentences, nEmbed=100, negativeRate=5, winSize = 5, minCount = 5):
