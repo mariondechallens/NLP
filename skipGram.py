@@ -92,8 +92,13 @@ for i in range(n):
 lw = 2*window_size
 context = np.zeros((n,lw,n))
 for i in range(len(idx_pairs)):
-    context[indices.index(idx_pairs[i,0]),] = center[indices.index(idx_pairs[i,1])]
+    context[indices.index(idx_pairs[i,0]),i%4] = center[indices.index(idx_pairs[i,1])]
     
+for i in range(n):
+    print(i, "\n center word =", center[i], "\n context words =\n",context[i])
+u_c = context[0]
+v_w = center[0]
+p = np.matmul(u_c,v_w)
 
 def softmax(x):
     """Calculate softmax based probability for given input vector
