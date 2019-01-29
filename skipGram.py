@@ -79,8 +79,18 @@ idx_pairs = np.array(idx_pairs) #pairs of (center word, context word)
 # nominator : exp(u_c'v_w) is the similarity score of a pair (c,w)
 # denominator : sum(cont in context) of exp(u_cont'v_w)
 
-sentence = sentences[48] 
-#['2', 'children', 'riding', 'swings', 'at', 'the', 'fair']
+sentence = sentences[489] 
+idx_pairs = []
+indices = [word2idx[word] for word in sentence]
+    # for each word as center word
+for center_word_pos in range(len(indices)):
+    for w in range(-window_size, window_size + 1):
+        context_word_pos = center_word_pos + w 
+        if context_word_pos < 0 or context_word_pos >= len(indices) or center_word_pos == context_word_pos:
+            continue
+        context_word_idx = indices[context_word_pos]
+        idx_pairs.append((indices[center_word_pos], context_word_idx))
+idx_pairs = np.array(idx_pairs)
 #  building center word and context word vectors by one hot encoding
 n = len(sentence)
 center = np.zeros((n,n))
@@ -131,39 +141,87 @@ def backprop(W,W2, e, h, x, eta = 0.025):
 
     # UPDATE WEIGHTS
     W = W - (eta * dl_dw)
-    w2 = W2 - (eta * dl_dw2)
-    pass
+    W2 = W2 - (eta * dl_dw2)
+    return (W,W2)
 
 def train(center,context,epochs,n,m=2):
     # INITIALIZE WEIGHT MATRICES
-    W = np.random.uniform(-0.8, 0.8, (n, m))     # context matrix
+    W = np.random.uniform(-0.8, 0.8, (n, m))   # context matrix
     W2 = np.random.uniform(-0.8, 0.8, (m, n))     # embedding matrix
 
     for i in range(epochs):
         loss = 0
-        for v_w in center:
-            for u_c in context:
-                u_c = u_c[~np.all(u_c == 0, axis=1)] #removing zero lines
+        for j in range(n): #take (center, context) couples
+            v_w = center[j]
+            u_c = context[j]
+            u_c = u_c[~np.all(u_c == 0, axis=1)] #removing zero lines
                 #hidden layer
-                h = np.matmul(W.transpose(),v_w)
+            h = np.matmul(W.transpose(),v_w)
                 #output context word
-                u = np.matmul(W2.transpose(),h)
+            u = np.matmul(W2.transpose(),h)
                 #soft max
-                y = softmax(u)
+            y = softmax(u)
 
             # ERROR
-                EI = np.sum([np.subtract(y, word) for word in u_c], axis=0)
+            EI = np.sum([np.subtract(y, word) for word in u_c], axis=0)
 
             # BACKPROPAGATION
-                backprop(W = W,W2 = W2,e = EI, h = h, x = v_w)
+            W,W2 = backprop(W = W,W2 = W2,e = EI, h = h, x = v_w)
 
             # CALCULATE LOSS
-                loss += -np.sum([u[np.argmax(word)] for word in u_c]) + len(u_c) * np.log(np.sum(np.exp(u)))
+            loss += -np.sum([u[np.argmax(word)] for word in u_c]) + len(u_c) * np.log(np.sum(np.exp(u)))
 
+        if i%1000== 0:
             print('EPOCH:',i, 'LOSS:', loss)
-    pass
+            
+    return(W,W2)
 
-train(center,context,5,n)
+W, W2 = train(center,context,5000,n)
+#test sur training data: y == u_c ?
+u_c = context[0]
+v_w = center[0]
+#hidden layer
+h = np.matmul(W.transpose(),v_w)
+#output context word
+u = np.matmul(W2.transpose(),h)
+#soft max
+y = softmax(u)
+
+#test sur testing data: y == u_c ?
+sentence = sentences[99] + ['.']*( len(sentences[489]) - len(sentences[99]) )
+print(sentence)
+idx_pairs = []
+indices = [word2idx[word] for word in sentence]
+    # for each word as center word
+for center_word_pos in range(len(indices)):
+    for w in range(-window_size, window_size + 1):
+        context_word_pos = center_word_pos + w 
+        if context_word_pos < 0 or context_word_pos >= len(indices) or center_word_pos == context_word_pos:
+            continue
+        context_word_idx = indices[context_word_pos]
+        idx_pairs.append((indices[center_word_pos], context_word_idx))
+idx_pairs = np.array(idx_pairs)
+#  building center word and context word vectors by one hot encoding
+n = len(sentence)
+center = np.zeros((n,n))
+for i in range(n):
+    vec = np.zeros(len(sentence))
+    vec[i] = 1
+    center[i] = vec
+
+lw = 2*window_size
+context = np.zeros((n,lw,n))
+for i in range(len(idx_pairs)):
+    context[indices.index(idx_pairs[i,0]),i%4] = center[indices.index(idx_pairs[i,1])]
+
+u_c = context[0]
+v_w = center[0]
+#hidden layer
+h = np.matmul(W.transpose(),v_w)
+#output context word
+u = np.matmul(W2.transpose(),h)
+#soft max
+y = softmax(u)
 
 class SkipGram:
     def __init__(self,sentences, nEmbed=100, negativeRate=5, winSize = 5, minCount = 5):
