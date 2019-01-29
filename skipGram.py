@@ -96,9 +96,24 @@ for i in range(len(idx_pairs)):
     
 for i in range(n):
     print(i, "\n center word =", center[i], "\n context words =\n",context[i])
+# skip gram = center word in input and context words in output
+    
 u_c = context[0]
+
+#input center word
 v_w = center[0]
-p = np.matmul(u_c,v_w)
+
+W = np.random.normal(size = (n,2)) #input -> hidden matrix
+W2 = np.random.normal(size = (2,n)) #hidden -> output matrix
+
+#hidden layer
+h = np.matmul(W.transpose(),v_w)
+#output context word
+u = np.matmul(W2.transpose(),h)
+#soft max
+y = softmax(u)
+
+#back progagation and training to improve W and W2
 
 def softmax(x):
     """Calculate softmax based probability for given input vector
@@ -110,6 +125,45 @@ def softmax(x):
     e_x = np.exp(x)
     return e_x / e_x.sum(axis=0)
 
+def backprop(W,W2, e, h, x, eta = 0.025):
+    dl_dw2 = np.outer(h, e)  
+    dl_dw = np.outer(x, np.matmul(W2, e.transpose()))
+
+    # UPDATE WEIGHTS
+    W = W - (eta * dl_dw)
+    w2 = W2 - (eta * dl_dw2)
+    pass
+
+def train(center,context,epochs,n,m=2):
+    # INITIALIZE WEIGHT MATRICES
+    W = np.random.uniform(-0.8, 0.8, (n, m))     # context matrix
+    W2 = np.random.uniform(-0.8, 0.8, (m, n))     # embedding matrix
+
+    for i in range(epochs):
+        loss = 0
+        for v_w in center:
+            for u_c in context:
+                u_c = u_c[~np.all(u_c == 0, axis=1)] #removing zero lines
+                #hidden layer
+                h = np.matmul(W.transpose(),v_w)
+                #output context word
+                u = np.matmul(W2.transpose(),h)
+                #soft max
+                y = softmax(u)
+
+            # ERROR
+                EI = np.sum([np.subtract(y, word) for word in u_c], axis=0)
+
+            # BACKPROPAGATION
+                backprop(W = W,W2 = W2,e = EI, h = h, x = v_w)
+
+            # CALCULATE LOSS
+                loss += -np.sum([u[np.argmax(word)] for word in u_c]) + len(u_c) * np.log(np.sum(np.exp(u)))
+
+            print('EPOCH:',i, 'LOSS:', loss)
+    pass
+
+train(center,context,5,n)
 
 class SkipGram:
     def __init__(self,sentences, nEmbed=100, negativeRate=5, winSize = 5, minCount = 5):
