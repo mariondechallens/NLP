@@ -126,12 +126,7 @@ y = softmax(u)
 #back progagation and training to improve W and W2
 
 def softmax(x):
-    """Calculate softmax based probability for given input vector
-    # Arguments
-        x: numpy array/list
-    # Returns
-        softmax of input array
-    """
+
     e_x = np.exp(x)
     return e_x / e_x.sum(axis=0)
 
@@ -151,16 +146,25 @@ def train(center,context,epochs,n,m=2):
 
     for i in range(epochs):
         loss = 0
-        for j in range(n): #take (center, context) couples
+        for j in range(n): 
+            
             v_w = center[j]
+            
+            #taking a context of v_w with P(D=1)
             u_c = context[j]
             u_c = u_c[~np.all(u_c == 0, axis=1)] #removing zero lines
+            #adding a context of v_w with P(D=0)
+            k = np.random.randint(n)
+            word = center[k]
+            u_c = np.concatenate((u_c,word.reshape(1,n)), axis = 0)
+            
                 #hidden layer
             h = np.matmul(W.transpose(),v_w)
                 #output context word
             u = np.matmul(W2.transpose(),h)
-                #soft max
-            y = softmax(u)
+           
+            y = softmax(u) 
+            
 
             # ERROR
             EI = np.sum([np.subtract(y, word) for word in u_c], axis=0)
@@ -169,7 +173,8 @@ def train(center,context,epochs,n,m=2):
             W,W2 = backprop(W = W,W2 = W2,e = EI, h = h, x = v_w)
 
             # CALCULATE LOSS
-            loss += -np.sum([u[np.argmax(word)] for word in u_c]) + len(u_c) * np.log(np.sum(np.exp(u)))
+            loss += -np.sum([u[np.argmax(word)] for word in u_c]) + \
+                    len(u_c) * np.log(np.sum(np.exp(u))) 
 
         if i%1000== 0:
             print('EPOCH:',i, 'LOSS:', loss)
@@ -178,8 +183,8 @@ def train(center,context,epochs,n,m=2):
 
 W, W2 = train(center,context,5000,n)
 #test sur training data: y == u_c ?
-u_c = context[0]
-v_w = center[0]
+u_c = context[9]
+v_w = center[9]
 #hidden layer
 h = np.matmul(W.transpose(),v_w)
 #output context word
