@@ -103,7 +103,13 @@ lw = 2*window_size
 context = np.zeros((n,lw,n))
 for i in range(len(idx_pairs)):
     context[indices.index(idx_pairs[i,0]),i%4] = center[indices.index(idx_pairs[i,1])]
-    
+
+'''center = indices  
+lw = 2*window_size
+context = np.zeros((n,lw))  
+for i in range(len(idx_pairs)):
+    context[center.index(idx_pairs[i,0]),i%4] = idx_pairs[i,1]'''
+
 for i in range(n):
     print(i, "\n center word =", center[i], "\n context words =\n",context[i])
 # skip gram = center word in input and context words in output
@@ -138,44 +144,50 @@ def train(center,context,epochs,n,prob,m=2,k=5):
             u_c = context[j]
             u_c = u_c[~np.all(u_c == 0, axis=1)] #removing zero lines
             #contructing D' from u_c with k negative context words for each positive one
+            Dn = []
             for context_pos in range(len(u_c)):
                 for l in range(k):  
                     rd = np.random.choice(n,p=prob)
                     context_neg = center[rd]
-                    u_c = np.concatenate((u_c,context_neg.reshape(1,n)), axis = 0)
+                    Dn.append(context_neg)
+            Dn = np.array(Dn)
+            #u_c = np.concatenate((u_c,context_neg.reshape(1,n)), axis = 0)
             
-                #hidden layer
+            #hidden layer
             h = np.matmul(W.transpose(),v_w)
-                #output context word
+            #output context word
             u = np.matmul(W2.transpose(),h)
            
             y = softmax(u) 
             
 
             # ERROR
-            EI = np.sum([np.subtract(y, word) for word in u_c], axis=0)
+            EI = np.sum([np.subtract(y, word) for word in u_c], axis=0) - \
+                 np.sum([np.subtract(y, word) for word in Dn], axis=0)
 
             # BACKPROPAGATION
             W,W2 = backprop(W = W,W2 = W2,e = EI, h = h, x = v_w)
 
             # CALCULATE LOSS
             loss += -np.sum([u[np.argmax(word)] for word in u_c]) + \
-                    len(u_c) * np.log(np.sum(np.exp(u))) 
+                    len(u_c) * np.log(np.sum(np.exp(u))) + \
+                    np.sum([u[np.argmax(word)] for word in Dn]) - \
+                    len(Dn) * np.log(np.sum(np.exp(u)))
 
-        if i%1000== 0:
+        if i%10== 0:
             print('EPOCH:',i, 'LOSS:', loss)
             
     return(W,W2)
 
 proba = np.array([sentence.count(word)/n for word in sentence]) #occurence proba
 proba2 = [p**(3/4)/ sum(proba**(3/4)) for p in proba]
-W, W2 = train(center,context,5000,n = len(sentence),prob = proba2)
+W, W2 = train(center,context,50,n = len(sentence),prob = proba2)
 
 #test sur training data: y == u_c ?
-u_c = context[9]
-v_w = center[9]
+u_c = context[0]
+v_w = center[0]
 #hidden layer
-h = np.matmul(W.transpose(),v_w)
+h =  np.matmul(W.transpose(),v_w)
 #output context word
 u = np.matmul(W2.transpose(),h)
 #soft max
