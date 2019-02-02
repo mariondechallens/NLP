@@ -107,21 +107,7 @@ for i in range(len(idx_pairs)):
 for i in range(n):
     print(i, "\n center word =", center[i], "\n context words =\n",context[i])
 # skip gram = center word in input and context words in output
-    
-u_c = context[0]
 
-#input center word
-v_w = center[0]
-
-W = np.random.normal(size = (n,2)) #input -> hidden matrix
-W2 = np.random.normal(size = (2,n)) #hidden -> output matrix
-
-#hidden layer
-h = np.matmul(W.transpose(),v_w)
-#output context word
-u = np.matmul(W2.transpose(),h)
-#soft max
-y = softmax(u)
 
 #back progagation and training to improve W and W2
 
@@ -139,24 +125,24 @@ def backprop(W,W2, e, h, x, eta = 0.025):
     W2 = W2 - (eta * dl_dw2)
     return (W,W2)
 
-def train(center,context,epochs,n,m=2):
+def train(center,context,epochs,n,prob,m=2,k=5):
     # INITIALIZE WEIGHT MATRICES
     W = np.random.uniform(-0.8, 0.8, (n, m))   # context matrix
     W2 = np.random.uniform(-0.8, 0.8, (m, n))     # embedding matrix
 
-    for i in range(epochs):
+    for i in range(epochs): #negative sampling
         loss = 0
         for j in range(n): 
             
             v_w = center[j]
-            
-            #taking a context of v_w with P(D=1)
             u_c = context[j]
             u_c = u_c[~np.all(u_c == 0, axis=1)] #removing zero lines
-            #adding a context of v_w with P(D=0)
-            k = np.random.randint(n)
-            word = center[k]
-            u_c = np.concatenate((u_c,word.reshape(1,n)), axis = 0)
+            #contructing D' from u_c with k negative context words for each positive one
+            for context_pos in range(len(u_c)):
+                for l in range(k):  
+                    rd = np.random.choice(n,p=prob)
+                    context_neg = center[rd]
+                    u_c = np.concatenate((u_c,context_neg.reshape(1,n)), axis = 0)
             
                 #hidden layer
             h = np.matmul(W.transpose(),v_w)
@@ -181,7 +167,10 @@ def train(center,context,epochs,n,m=2):
             
     return(W,W2)
 
-W, W2 = train(center,context,5000,n)
+proba = np.array([sentence.count(word)/n for word in sentence]) #occurence proba
+proba2 = [p**(3/4)/ sum(proba**(3/4)) for p in proba]
+W, W2 = train(center,context,5000,n = len(sentence),prob = proba2)
+
 #test sur training data: y == u_c ?
 u_c = context[9]
 v_w = center[9]
