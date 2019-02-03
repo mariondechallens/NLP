@@ -174,7 +174,8 @@ def train(center,context,epochs,n,prob,m=2,k=5):
                 
             
             # ERROR
-            EI = np.sum([np.subtract(y, word) for word in u_c], axis=0) + y
+            EI = np.sum([np.subtract(y, word) for word in u_c], axis=0) #+ \
+                 #np.sum([np.subtract(1-y, word) for word in u_c], axis=0)
             #EI_n = y
 
             # BACKPROPAGATION
@@ -183,9 +184,9 @@ def train(center,context,epochs,n,prob,m=2,k=5):
 
             # CALCULATE LOSS
             loss += -np.sum([u[np.argmax(word)] for word in u_c]) + \
-                    len(u_c) * np.log(np.sum(np.exp(u))) - \
-                    np.sum([u[np.argmax(word)] for word in Dn]) + \
-                    len(Dn) * np.log(np.sum(np.exp(u)))
+                    len(u_c) * np.log(np.sum(np.exp(u))) #- \
+                    #np.sum([u[np.argmax(word)] for word in Dn]) + \
+                    #len(Dn) * np.log(np.sum(np.exp(u)))
         if conv:
             break
         if i%100== 0:
