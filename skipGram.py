@@ -135,7 +135,9 @@ def train(center,context,epochs,n,prob,m=2,k=5):
     # INITIALIZE WEIGHT MATRICES
     W = np.random.uniform(-0.8, 0.8, (n, m))   # context matrix
     W2 = np.random.uniform(-0.8, 0.8, (m, n))     # embedding matrix
-
+    
+    W_n = np.random.uniform(-0.8, 0.8, (n, m))   # context matrix
+    W2_n = np.random.uniform(-0.8, 0.8, (m, n))     # embedding matrix
     for i in range(epochs): #negative sampling
         loss = 0
         for j in range(n): 
@@ -153,35 +155,41 @@ def train(center,context,epochs,n,prob,m=2,k=5):
             Dn = np.array(Dn)
             #u_c = np.concatenate((u_c,context_neg.reshape(1,n)), axis = 0)
             
-            #hidden layer
+            #hidden layer for pos
             h = np.matmul(W.transpose(),v_w)
-            #output context word
+            #output context word for pos
             u = np.matmul(W2.transpose(),h)
+            
+            #hidden layer for neg
+            h_n = np.matmul(W_n.transpose(),v_w)
+            #output context word for neg
+            u_n = np.matmul(W2_n.transpose(),h_n)
            
-            y = softmax(u) 
+            y = softmax(u)#*softmax(-u_n) 
             
 
             # ERROR
-            EI = np.sum([np.subtract(y, word) for word in u_c], axis=0) - \
-                 np.sum([np.subtract(y, word) for word in Dn], axis=0)
+            EI = np.sum([np.subtract(y, word) for word in u_c], axis=0) 
+            #EI_n = np.sum([np.subtract(y, word) for word in Dn], axis=0)
 
             # BACKPROPAGATION
             W,W2 = backprop(W = W,W2 = W2,e = EI, h = h, x = v_w)
+            #W_n,W2_n = backprop(W = W_n,W2 = W2_n,e = EI_n, h = h_n, x = v_w)
 
             # CALCULATE LOSS
             loss += -np.sum([u[np.argmax(word)] for word in u_c]) + \
-                    len(u_c) * np.log(np.sum(np.exp(u))) + \
-                    np.sum([u[np.argmax(word)] for word in Dn]) - \
-                    len(Dn) * np.log(np.sum(np.exp(u)))
+                    len(u_c) * np.log(np.sum(np.exp(u))) #+ \
+                    #np.sum([u_n[np.argmax(word)] for word in Dn]) + \
+                    #len(Dn) * np.log(np.sum(np.exp(-u_n)))
 
-        if i%10== 0:
+        if i%100== 0:
             print('EPOCH:',i, 'LOSS:', loss)
             
     return(W,W2)
 
 proba = np.array([sentence.count(word)/n for word in sentence]) #occurence proba
 proba2 = [p**(3/4)/ sum(proba**(3/4)) for p in proba]
-W, W2 = train(center,context,50,n = len(sentence),prob = proba2)
+W, W2 = train(center,context,500,n = len(sentence),prob = proba2)
 
 #test sur training data: y == u_c ?
 u_c = context[0]
