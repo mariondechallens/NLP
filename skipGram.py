@@ -140,6 +140,7 @@ def train(center,context,epochs,n,prob,m=2,k=5):
     W2_n = np.random.uniform(-0.8, 0.8, (m, n))     # embedding matrix
     for i in range(epochs): #negative sampling
         loss = 0
+        conv = False
         for j in range(n): 
             
             v_w = center[j]
@@ -167,9 +168,11 @@ def train(center,context,epochs,n,prob,m=2,k=5):
            
             y = softmax(u)*softmax(u_n) 
             
+            if sum(np.isnan(y)) > 0:
+                conv = True 
+                break
+                
             
-            
-
             # ERROR
             EI = np.sum([np.subtract(y, word) for word in u_c], axis=0) 
             EI_n = y
@@ -183,19 +186,22 @@ def train(center,context,epochs,n,prob,m=2,k=5):
                     len(u_c) * np.log(np.sum(np.exp(u))) #- \
                     #np.sum([u_n[np.argmax(word)] for word in Dn]) + \
                     #len(Dn) * np.log(np.sum(np.exp(u_n)))
-
+        if conv:
+            break
         if i%1== 0:
             print('EPOCH:',i, 'LOSS:', loss)
+        
+            
             
     return(W,W2)
 
 proba = np.array([sentence.count(word)/n for word in sentence]) #occurence proba
 proba2 = [p**(3/4)/ sum(proba**(3/4)) for p in proba]
-W, W2 = train(center,context,40,n = len(sentence),prob = proba2)
+W, W2 = train(center,context,60,n = len(sentence),prob = proba2)
 
 #test sur training data: y == u_c ?
-u_c = context[9]
-v_w = center[9]
+u_c = context[2]
+v_w = center[2]
 #hidden layer
 h =  np.matmul(W.transpose(),v_w)
 #output context word
