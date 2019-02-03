@@ -165,42 +165,46 @@ def train(center,context,epochs,n,prob,m=2,k=5):
             #output context word for neg
             u_n = np.matmul(W2_n.transpose(),h_n)
            
-            y = softmax(u)#*softmax(-u_n) 
+            y = softmax(u)*softmax(u_n) 
+            
+            
             
 
             # ERROR
             EI = np.sum([np.subtract(y, word) for word in u_c], axis=0) 
-            #EI_n = np.sum([np.subtract(y, word) for word in Dn], axis=0)
+            EI_n = y
 
             # BACKPROPAGATION
             W,W2 = backprop(W = W,W2 = W2,e = EI, h = h, x = v_w)
-            #W_n,W2_n = backprop(W = W_n,W2 = W2_n,e = EI_n, h = h_n, x = v_w)
+            W_n,W2_n = backprop(W = W_n,W2 = W2_n,e = EI_n, h = h_n, x = v_w)
 
             # CALCULATE LOSS
             loss += -np.sum([u[np.argmax(word)] for word in u_c]) + \
-                    len(u_c) * np.log(np.sum(np.exp(u))) #+ \
+                    len(u_c) * np.log(np.sum(np.exp(u))) #- \
                     #np.sum([u_n[np.argmax(word)] for word in Dn]) + \
-                    #len(Dn) * np.log(np.sum(np.exp(-u_n)))
+                    #len(Dn) * np.log(np.sum(np.exp(u_n)))
 
-        if i%100== 0:
+        if i%1== 0:
             print('EPOCH:',i, 'LOSS:', loss)
             
     return(W,W2)
 
 proba = np.array([sentence.count(word)/n for word in sentence]) #occurence proba
 proba2 = [p**(3/4)/ sum(proba**(3/4)) for p in proba]
-W, W2 = train(center,context,500,n = len(sentence),prob = proba2)
+W, W2 = train(center,context,40,n = len(sentence),prob = proba2)
 
 #test sur training data: y == u_c ?
-u_c = context[0]
-v_w = center[0]
+u_c = context[9]
+v_w = center[9]
 #hidden layer
 h =  np.matmul(W.transpose(),v_w)
 #output context word
 u = np.matmul(W2.transpose(),h)
 #soft max
 y = softmax(u)
+np.sum([y[np.argmax(word)] for word in u_c]) # = 1 : equal split between pos context words 
 
+        
 #test sur testing data: y == u_c ?
 sentence = sentences[99] + ['.']*( len(sentences[489]) - len(sentences[99]) )
 print(sentence)
