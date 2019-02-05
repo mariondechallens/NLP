@@ -134,6 +134,8 @@ def backprop(W,W2, e, h, x, eta = 0.025):
     W2 = W2 - (eta * dl_dw2)
     return (W,W2)
 
+proba = np.array([sentence.count(word)/n for word in sentence]) #occurence proba
+proba2 = [p**(3/4)/ sum(proba**(3/4)) for p in proba]
 def train(center,context,epochs,n,prob,m=2,k=5):
     # INITIALIZE WEIGHT MATRICES
     W = np.random.uniform(-0.8, 0.8, (n, m))   # context matrix
@@ -168,34 +170,32 @@ def train(center,context,epochs,n,prob,m=2,k=5):
             #output context word for neg
             u_n = -np.matmul(W2_n.transpose(),h_n)
            
-            y = sigmoid(u)*(sigmoid(u_n)**k)
+            y = sigmoid(u)*sigmoid(u_n)
             #y = softmax(u)
         
                 
             
             # ERROR
-            EI = np.sum([np.subtract(y, word) for word in u_c], axis=0)  
-            EI_n = np.sum([np.subtract(y, word) for word in Dn], axis=0)
-
+            EI = np.sum([np.subtract(y, word) for word in u_c], axis=0) 
+            #EI_n = np.sum([np.subtract(y, word) for word in Dn], axis=0)
             # BACKPROPAGATION
             W,W2 = backprop(W = W,W2 = W2,e = EI, h = h, x = v_w)
-            W_n,W2_n = backprop(W = W_n,W2 = W2_n,e = EI_n, h = h_n, x = v_w)
+            W_n,W2_n = backprop(W = W_n,W2 = W2_n,e = EI, h = h_n, x = v_w)
 
             # CALCULATE LOSS
             loss += -np.sum([u[np.argmax(word)] for word in u_c]) + \
-                    len(u_c) * np.log(np.sum(np.exp(u))) - \
-                    np.sum([u_n[np.argmax(word)] for word in Dn]) + \
-                    len(Dn) * np.log(np.sum(np.exp(u_n)))
-        if i%1== 0:
+                    len(u_c) * np.log(np.sum(np.exp(u))) #- \
+                    #np.sum([u_n[np.argmax(word)] for word in Dn]) + \
+                    #len(Dn) * np.log(np.sum(np.exp(u_n)))
+        if i%10== 0:
             print('EPOCH:',i, 'LOSS:', loss)
         
             
             
     return(W,W2)
 
-proba = np.array([sentence.count(word)/n for word in sentence]) #occurence proba
-proba2 = [p**(3/4)/ sum(proba**(3/4)) for p in proba]
-W, W2 = train(center,context,50,n = len(sentence),prob = proba2)
+
+W, W2 = train(center,context,100,n = len(sentence),prob = proba2)
 
 #test sur training data: y == u_c ?
 u_c = context[0]

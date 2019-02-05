@@ -36,7 +36,8 @@ __emails__  = ['jiahui.hu@student-cs.fr','mariondechallens@gmail.com']
 
 #Data Path
 import os
-PATH_TO_DATA = "C:/Users/Sophie HU/Desktop/CentraleSupelec/DL/NLP/nlp_project/nlp_project/data"
+PATH_TO_DATA = "C:/Users/Admin/Documents/Centrale Paris/3A/OMA/Deep Learning/nlp_project/nlp_project/data/"
+#PATH_TO_DATA = "C:/Users/Sophie HU/Desktop/CentraleSupelec/DL/NLP/nlp_project/nlp_project/data"
 filename = os.path.join(PATH_TO_DATA, 'sentences.txt')
 
 
@@ -128,7 +129,8 @@ class SkipGram:
 
 
 # Test Code
-test = SkipGram(sentences).vocab_ids()
+#test = SkipGram(sentences).vocab_ids()
+test = SkipGram(sentences,vocabulary,word2idx,idx2word)   
 vocabulary = test.vocabulary
 word2idx = test.word2idx
 idx2word = test.idx2word
