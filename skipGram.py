@@ -166,17 +166,16 @@ def train(center,context,epochs,n,prob,m=2,k=5):
             #hidden layer for neg
             h_n = np.matmul(W_n.transpose(),v_w)
             #output context word for neg
-            u_n = np.matmul(W2_n.transpose(),h_n)
+            u_n = -np.matmul(W2_n.transpose(),h_n)
            
-            y = sigmoid(u)*(sigmoid(-u_n)**k)
+            y = sigmoid(u)*(sigmoid(u_n)**k)
             #y = softmax(u)
         
                 
             
             # ERROR
-            EI = np.sum([np.subtract(y, word) for word in u_c], axis=0)  #+ \
-                 #np.sum([np.subtract(1-y, word) for word in u_c], axis=0)
-            EI_n = y
+            EI = np.sum([np.subtract(y, word) for word in u_c], axis=0)  
+            EI_n = np.sum([np.subtract(y, word) for word in Dn], axis=0)
 
             # BACKPROPAGATION
             W,W2 = backprop(W = W,W2 = W2,e = EI, h = h, x = v_w)
