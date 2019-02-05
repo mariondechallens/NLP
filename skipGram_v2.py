@@ -78,9 +78,11 @@ def vocab_ids(sentences,n_most=13000):
 vocabulary,word2idx,idx2word = vocab_ids(sentences,13000)
 
 
+def sigmoid(x):  
+    return 1 / (1 + np.exp(-x))
 
 class SkipGram:
-    def __init__(self,sentences,vocabulary,word2idx,idx2word, nEmbed=100, negativeRate=5, winSize = 2, minCount = 5):#winSize = 5
+    def __init__(self,sentences,vocabulary,word2idx,idx2word, dim = 2, nEmbed=100, negativeRate=5, winSize = 2, minCount = 5):#winSize = 5
         # raise NotImplementedError('implement it!')
         # self.sentences_ = sentences
         # self.nEmbed = nEmbed
@@ -92,6 +94,8 @@ class SkipGram:
         self.idx2word = idx2word 
         self.idx_pairs = []
         self.sentences = sentences 
+        self.dim = dim
+        self.voc_size = len(vocabulary)
     ########################################################################################################
     #1. Preprcessing Steps#
     ########################################################################################################
@@ -132,7 +136,28 @@ class SkipGram:
     ########################################################################################################
     #  building center word and context word vectors by one hot encoding
 
-    '''def train(self,stepsize, epochs):
+    def train(self,stepsize, epochs):
+        w0 = np.random.uniform(-0.8/self.dim,0.8/self.dim,(self.voc_size,self.dim))
+        w1 = np.zeros((self.voc_size,self.dim))
+        for i in range(epochs): 
+            #loss = 0
+            j= 0
+            while j < len(self.idx_pairs):
+                context_word= classif[0,1]
+                w = np.zeros(self.dim)
+                classif = idx_pairs[j:j+k+1]
+                for ind in range(k+1):
+                    neg_word = classif[ind,1]
+                    u = np.dot(w0[context_word], w1[neg])
+                    p = sigmoid(u)
+                    e = 0.025 * (classif[ind,2] - p)
+                    w += e * w1[neg_word]
+                    w1[neg_word] += e * w0[context_word] 
+                
+                w0[context_word] += w
+                j += k+1 #passer à la prochaine paire positive
+
+
 
     def save(self,path):
         
