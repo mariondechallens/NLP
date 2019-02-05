@@ -96,7 +96,7 @@ class SkipGram:
     #1. Preprcessing Steps#
     ########################################################################################################
     ## generating vocabulary and ids from observed data(most frequent words)
-    def create_pairs_pos(self):
+    def create_pairs_pos_neg(self,k=5):
         ''' This function builds center word and context word vectors by one hot encoding '''
         # generating words vector for words as words (center) and words as context
         window_size = self.winSize  #context windows - exploration around the center word
@@ -116,6 +116,12 @@ class SkipGram:
                         continue
                     context_word_idx = indices[context_word_pos]
                     self.idx_pairs.append((indices[center_word_pos], context_word_idx,1))
+                    #negative words
+                    for i in range(k):
+                        indice_neg = np.random.randint(len(vocabulary))
+                        self.idx_pairs.append((indices[center_word_pos], indice_neg,-1))
+                    
+                        
         self.idx_pairs = np.array(self.idx_pairs) #pairs of (center word, context word)
         return self.idx_pairs
     
@@ -126,15 +132,25 @@ class SkipGram:
     ########################################################################################################
     #  building center word and context word vectors by one hot encoding
 
+    '''def train(self,stepsize, epochs):
 
+    def save(self,path):
+        
+
+    def similarity(self,word1,word2):
+       
+
+    def load(path):
+        '''
 
 # Test Code
 #test = SkipGram(sentences).vocab_ids()
-test = SkipGram(sentences,vocabulary,word2idx,idx2word)   
+vocabulary,word2idx,idx2word = vocab_ids(sentences[0:5],13000)
+test = SkipGram(sentences[0:10],vocabulary,word2idx,idx2word)   
 vocabulary = test.vocabulary
 word2idx = test.word2idx
 idx2word = test.idx2word
-test_id_pairs = SkipGram(sentences,vocabulary,word2idx,idx2word).create_pairs_pos()
+test_id_pairs = test.create_pairs_pos_neg()
 
 
 if __name__ == '__main__':
