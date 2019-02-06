@@ -156,6 +156,8 @@ class SkipGram:
                 
                 w0[context_word] += w
                 j += k+1 #passer à la prochaine paire positive
+                
+        #for debug - to be removed
         return w0, w1
 
 
