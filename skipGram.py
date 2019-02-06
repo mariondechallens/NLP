@@ -136,6 +136,7 @@ def backprop(W,W2, e, h, x, eta = 0.025):
 
 proba = np.array([sentence.count(word)/n for word in sentence]) #occurence proba
 proba2 = [p**(3/4)/ sum(proba**(3/4)) for p in proba]
+
 def train(center,context,epochs,n,prob,m=2,k=5):
     # INITIALIZE WEIGHT MATRICES
     W = np.random.uniform(-0.8, 0.8, (n, m))   # context matrix

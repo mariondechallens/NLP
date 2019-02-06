@@ -157,8 +157,6 @@ class SkipGram:
                 w0[context_word] += w
                 j += k+1 #passer à la prochaine paire positive
                 
-        #for debug - to be removed
-        return w0, w1
 
 
 '''    def save(self,path):
@@ -173,13 +171,19 @@ class SkipGram:
 # Test Code
 #test = SkipGram(sentences).vocab_ids()
 vocabulary,word2idx,idx2word = vocab_ids(sentences[0:5],13000)
-test = SkipGram(sentences[0:10],vocabulary,word2idx,idx2word)   
+test = SkipGram(sentences[0:5],vocabulary,word2idx,idx2word)   
 vocabulary = test.vocabulary
 word2idx = test.word2idx
 idx2word = test.idx2word
 test_id_pairs = test.create_pairs_pos_neg()
 
-w0, w1 = test.train(5,5)
+sentence = sentences[0:5]
+sentences_joint = [inner for outer in sentence for inner in outer]
+sentences_clean = [word in sentences_joint if word.isalpha()==True]
+sentences_count = Counter(sentences_joint)
+sentences_most_frqt = sentences_count.most_common(13000)
+proba = np.array([x[1]/ for x in sentences_most_frqt if x[0].isalpha()==True])#occurence proba
+proba2 = [p**(3/4)/ sum(proba**(3/4)) for p in proba]
 
 if __name__ == '__main__':
 
