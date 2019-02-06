@@ -75,116 +75,9 @@ def vocab_ids(sentences,n_most=13000):
     idx2word = {idx: w for (idx, w) in enumerate(vocabulary)}
     return vocabulary,word2idx,idx2word
 
-vocabulary,word2idx,idx2word = vocab_ids(sentences,13000)
-
 
 def sigmoid(x):  
     return 1 / (1 + np.exp(-x))
-
-class SkipGram:
-    def __init__(self,sentences,vocabulary,word2idx,idx2word, dim = 2, nEmbed=100, negativeRate=5, winSize = 2, minCount = 5):#winSize = 5
-        # raise NotImplementedError('implement it!')
-        # self.sentences_ = sentences
-        # self.nEmbed = nEmbed
-        # self.negativeRate = negativeRate
-        self.winSize = winSize
-        # self.minCount = minCount
-        self.vocabulary = vocabulary
-        self.word2idx = word2idx
-        self.idx2word = idx2word 
-        self.idx_pairs = []
-        self.sentences = sentences 
-        self.dim = dim
-        self.voc_size = len(vocabulary)
-    ########################################################################################################
-    #1. Preprcessing Steps#
-    ########################################################################################################
-    ## generating vocabulary and ids from observed data(most frequent words)
-    def create_pairs_pos_neg(self,k=5):
-        ''' This function builds center word and context word vectors by one hot encoding '''
-        # generating words vector for words as words (center) and words as context
-        window_size = self.winSize  #context windows - exploration around the center word
-        # word2idx = self.word2idx
-        for sentence in sentences:
-            indices = [word2idx[word] for word in sentence if word in vocabulary]
-            # for each word as center word
-            for center_word_pos in range(len(indices)):
-                # for each window position
-                # we explore the words next to the center_word 
-                # within the context window
-                for w in range(-window_size, window_size + 1):
-                    # indice of a contex_word in the context window of the center_word
-                    context_word_pos = center_word_pos + w 
-                    # make sure not jump out sentence
-                    if context_word_pos < 0 or context_word_pos >= len(indices) or center_word_pos == context_word_pos:
-                        continue
-                    context_word_idx = indices[context_word_pos]
-                    self.idx_pairs.append((indices[center_word_pos], context_word_idx,1))
-                    #negative words
-                    for i in range(k):
-                        indice_neg = np.random.randint(len(vocabulary))
-                        self.idx_pairs.append((indices[center_word_pos], indice_neg,-1))
-                    
-                        
-        self.idx_pairs = np.array(self.idx_pairs) #pairs of (center word, context word)
-        return self.idx_pairs
-    
-    ## generating negatif samples
-    
-    ########################################################################################################
-    # 2. Skip-Gram#
-    ########################################################################################################
-    #  building center word and context word vectors by one hot encoding
-
-    def train(self, epochs,k):
-        w0 = np.random.uniform(-0.8/self.dim,0.8/self.dim,(self.voc_size,self.dim))
-        w1 = np.zeros((self.voc_size,self.dim))
-        for i in range(epochs): 
-            #loss = 0
-            j= 0
-            while j < len(self.idx_pairs):
-                w = np.zeros(self.dim)
-                classif = self.idx_pairs[j:j+k+1]              
-                context_word= classif[0,1]
-                for ind in range(k+1):
-                    word = classif[ind,1]
-                    u = np.dot(w0[context_word], w1[word])
-                    p = sigmoid(u)
-                    e = 0.025 * (classif[ind,2] - p)
-                    w += e * w1[word]
-                    w1[word] += e * w0[context_word] 
-                
-                w0[context_word] += w
-                j += k+1 #passer à la prochaine paire positive
-                
-
-
-'''    def save(self,path):
-        
-
-    def similarity(self,word1,word2):
-       
-
-    def load(path):
-        '''
-
-# Test Code
-#test = SkipGram(sentences).vocab_ids()
-vocabulary,word2idx,idx2word = vocab_ids(sentences[0:5],13000)
-test = SkipGram(sentences[0:5],vocabulary,word2idx,idx2word)   
-vocabulary = test.vocabulary
-word2idx = test.word2idx
-idx2word = test.idx2word
-test_id_pairs = test.create_pairs_pos_neg()
-
-sentence = sentences[0:5]
-sentences_joint = [inner for outer in sentence for inner in outer]
-sentences_clean = [word for word in sentences_joint if word.isalpha()==True]
-sentences_count = Counter(sentences_joint)
-sentences_most_frqt = sentences_count.most_common(13000)
-proba = np.array([x[1]/len(sentences_clean) for x in sentences_most_frqt if x[0].isalpha()==True]) #occurence proba
-proba2 = [p**(3/4)/ sum(proba**(3/4)) for p in proba]
-
 
 def log_Likelyhood(id_pairs,U,V):
     n_obs = id_pairs.shape[0]   
@@ -201,46 +94,147 @@ def log_Likelyhood(id_pairs,U,V):
 
     return ll
 
-def optim(id_pairs,nb_mots, dimension = 100, n_iter = 20,lr = 0.002):
+class SkipGram:
+    def __init__(self,sentences,vocabulary,word2idx,idx2word, dim = 2, nEmbed=100, negativeRate=5, winSize = 2, minCount = 5):#winSize = 5
+        # raise NotImplementedError('implement it!')
+        # self.sentences_ = sentences
+        # self.nEmbed = nEmbed
+        # self.negativeRate = negativeRate
+        self.winSize = winSize
+        # self.minCount = minCount
+        self.vocabulary = vocabulary
+        self.word2idx = word2idx
+        self.idx2word = idx2word 
+        self.idx_pairs = []
+        self.sentences = sentences 
+        self.dim = dim
+        self.voc_size = len(vocabulary)
+        self.proba = [] 
+    ########################################################################################################
+    #1. Preprcessing Steps#
+    ########################################################################################################
+    # probabilité de tirage des paires négatives
+    def proba(self):
+    
+        sentences_joint = [inner for outer in self.sentences for inner in outer]
+        sentences_clean = [word for word in sentences_joint if word.isalpha()==True]
+        sentences_count = Counter(sentences_joint)
+        sentences_most_frqt = sentences_count.most_common(13000)
+        prob = np.array([x[1]/len(sentences_clean) for x in sentences_most_frqt if x[0].isalpha()==True]) #occurence proba
+        self.proba = [p**(3/4)/ sum(prob**(3/4)) for p in prob]
+    ## generating vocabulary and ids from observed data(most frequent words)
+
+    def create_pairs_pos_neg(self,k=5):
+        ''' This function builds center word and context word vectors by one hot encoding '''
+        # generating words vector for words as words (center) and words as context
+        window_size = self.winSize  #context windows - exploration around the center word
+        # word2idx = self.word2idx
+        for sentence in self.sentences:
+            indices = [word2idx[word] for word in sentence if word in vocabulary]
+            # for each word as center word
+            for center_word_pos in range(len(indices)):
+                # for each window position
+                # we explore the words next to the center_word 
+                # within the context window
+                for w in range(-window_size, window_size + 1):
+                    # indice of a contex_word in the context window of the center_word
+                    context_word_pos = center_word_pos + w 
+                    # make sure not jump out sentence
+                    if context_word_pos < 0 or context_word_pos >= len(indices) or center_word_pos == context_word_pos:
+                        continue
+                    context_word_idx = indices[context_word_pos]
+                    self.idx_pairs.append((indices[center_word_pos], context_word_idx,1))
+                    #negative words
+                    for i in range(k):
+                        #indice_neg = np.random.randint(len(vocabulary))
+                        indice_neg = np.random.choice(self.voc_size,self.proba)
+                        self.idx_pairs.append((indices[center_word_pos], indice_neg,-1))
+                    
+                        
+        self.idx_pairs = np.array(self.idx_pairs) #pairs of (center word, context word)
+        return self.idx_pairs
+    
+
+    ## generating negatif samples
+    
+    ########################################################################################################
+    # 2. Skip-Gram#
+    ########################################################################################################
+    #  building center word and context word vectors by one hot encoding
+    def train(self, dimension = 100, n_iter = 20,lr = 0.002):
 
     # We initiate our embedding by using normal multivariate distribution
-    U = np.random.randn(nb_mots,dimension)
-    V = np.random.randn(nb_mots,dimension)
+        U = np.random.randn(self.voc_size,dimension)
+        V = np.random.randn(self.voc_size,dimension)
     
-    ll = log_Likelyhood(id_pairs,U,V)
-    print("initial likelyhood",ll)
+        ll = log_Likelyhood(self.idx_pairs,U,V)
+        print("initial likelyhood",ll)
     
-    id_pairs = np.array(id_pairs)
-    n_obs = id_pairs.shape[0]
+        #id_pairs = np.array(self.idx_pairs)
+        n_obs = self.idx_pairs.shape[0]
 
-    for iteration in range(n_iter):
+        for iteration in range(n_iter):
 
         #Randomize observations
-        np.random.shuffle(id_pairs)
+            np.random.shuffle(self.idx_pairs)
         
-        for id_obs in range(n_obs):
+            for id_obs in range(n_obs):
 
-            i,j,d = id_pairs[id_obs,:]
+                i,j,d = self.idx_pairs[id_obs,:]
                
-            u = U[i,:]
-            v = V[j,:]
+                u = U[i,:]
+                v = V[j,:]
             
-            x = np.dot(u,v)
+                x = np.dot(u,v)
 
-            grad_u_i = sigmoid(-d * x) * v * d
-            U[i,:] = U[i,:] + lr * grad_u_i
+                grad_u_i = sigmoid(-d * x) * v * d
+                U[i,:] = U[i,:] + lr * grad_u_i
             
-            grad_v_j = sigmoid(-d * x) * u * d       
-            V[j,:] = V[j,:] + lr * grad_v_j
+                grad_v_j = sigmoid(-d * x) * u * d       
+                V[j,:] = V[j,:] + lr * grad_v_j
             
         # We compute the likelyhood at the end of the current iteration
-        ll = log_Likelyhood(id_pairs,U,V)
-        print("likelyhood at step ",int(iteration + 1)," : ",ll)
+            ll = log_Likelyhood(self.idx_pairs,U,V)
+            print("likelyhood at step ",int(iteration + 1)," : ",ll)
         
-    return U,V,ll
+        return U,V,ll
 
-U,V = optim(test_id_pairs,len(vocabulary))
+    
 
+'''    def save(self,path):
+        
+
+    def similarity(self,word1,word2):
+       
+
+    def load(path):
+        '''
+
+# Test Code
+#test = SkipGram(sentences).vocab_ids()
+vocabulary,word2idx,idx2word = vocab_ids(sentences[0:5],13000)
+test = SkipGram(sentences[0],vocabulary,word2idx,idx2word)   
+#vocabulary = test.vocabulary
+#word2idx = test.word2idx
+#idx2word = test.idx2word
+test_id_pairs = test.create_pairs_pos_neg()
+
+
+U,V,ll = test.train(n_iter = 3,dimension = 100)
+
+#test paire pos
+i,j,d = test_id_pairs[0,:]
+u = U[i,:]
+v = V[j,:]
+x = np.dot(u,v)
+p = sigmoid(d*x)
+
+#test paire neg
+i,j,d = test_id_pairs[1,:]
+u = U[i,:]
+v = V[j,:]
+x = np.dot(u,v)
+p = sigmoid(d*x)
 
 
 
@@ -261,6 +255,6 @@ if __name__ == '__main__':
 
     else:
         pairs = loadPairs(opts.text)
-        sg = mSkipGram.load(opts.model)
+        sg = SkipGram.load(opts.model)
         for a,b,_ in pairs:
             print(sg.similarity(a,b))
