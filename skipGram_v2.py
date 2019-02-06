@@ -179,11 +179,70 @@ test_id_pairs = test.create_pairs_pos_neg()
 
 sentence = sentences[0:5]
 sentences_joint = [inner for outer in sentence for inner in outer]
-sentences_clean = [word in sentences_joint if word.isalpha()==True]
+sentences_clean = [word for word in sentences_joint if word.isalpha()==True]
 sentences_count = Counter(sentences_joint)
 sentences_most_frqt = sentences_count.most_common(13000)
-proba = np.array([x[1]/ for x in sentences_most_frqt if x[0].isalpha()==True])#occurence proba
+proba = np.array([x[1]/len(sentences_clean) for x in sentences_most_frqt if x[0].isalpha()==True]) #occurence proba
 proba2 = [p**(3/4)/ sum(proba**(3/4)) for p in proba]
+
+
+def log_Likelyhood(id_pairs,U,V):
+    n_obs = id_pairs.shape[0]   
+    ll = 0
+    for id_obs in range(n_obs):
+        i,j,d = id_pairs[id_obs,:]
+           
+        u = U[i,:]
+        v = V[j,:]
+
+        x = np.dot(u,v)
+
+        ll += np.log(sigmoid(d*x))
+
+    return ll
+
+def optim(id_pairs,nb_mots, dimension = 100, n_iter = 20,lr = 0.002):
+
+    # We initiate our embedding by using normal multivariate distribution
+    U = np.random.randn(nb_mots,dimension)
+    V = np.random.randn(nb_mots,dimension)
+    
+    ll = log_Likelyhood(id_pairs,U,V)
+    print("initial likelyhood",ll)
+    
+    id_pairs = np.array(id_pairs)
+    n_obs = id_pairs.shape[0]
+
+    for iteration in range(n_iter):
+
+        #Randomize observations
+        np.random.shuffle(id_pairs)
+        
+        for id_obs in range(n_obs):
+
+            i,j,d = id_pairs[id_obs,:]
+               
+            u = U[i,:]
+            v = V[j,:]
+            
+            x = np.dot(u,v)
+
+            grad_u_i = sigmoid(-d * x) * v * d
+            U[i,:] = U[i,:] + lr * grad_u_i
+            
+            grad_v_j = sigmoid(-d * x) * u * d       
+            V[j,:] = V[j,:] + lr * grad_v_j
+            
+        # We compute the likelyhood at the end of the current iteration
+        ll = log_Likelyhood(id_pairs,U,V)
+        print("likelyhood at step ",int(iteration + 1)," : ",ll)
+        
+    return U,V,ll
+
+U,V = optim(test_id_pairs,len(vocabulary))
+
+
+
 
 if __name__ == '__main__':
 
