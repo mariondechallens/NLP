@@ -69,9 +69,10 @@ def probability(sentences):
     sentences_joint = [inner for outer in sentences for inner in outer]
     sentences_count = Counter(sentences_joint)
     sentences_most_frqt = sentences_count.most_common(13000)
-    select_word = np.random.randint(len(sentences_most_frqt),size=32)
-    select_word2 = [sentences_most_frqt[i] for i in select_word]
-    total = sum(x[1] for x in select_word2 if x[0].isalpha()==True)
+    sentences_clean = [x for x in sentences_most_frqt if x[0].isalpha()==True]
+    select_word = np.random.randint(len(sentences_clean),size=32)
+    select_word2 = [sentences_clean[i] for i in select_word]
+    total = sum(x[1] for x in select_word2)
     prob = np.array([x[1]/total for x in select_word2 if x[0].isalpha()==True]) #occurence proba
     prob_neg = [p**(3/4)/ sum(prob**(3/4)) for p in prob]
     return  prob_neg, select_word
@@ -94,11 +95,8 @@ def log_Likelyhood(id_pairs,U,V):
 
     return ll
 
-def adam(grad_func,iter_,dim,d,alpha = 0.01, beta_1 = 0.9, beta_2 = 0.999, epsilon = 1e-8):
-    #theta_0 = 0	
-    u = np.random.randn(dim)
-    v = np.random.randn(dim)
-    x = np.dot(u,v)
+def adam(dim,d,u,v,x,iter_ = 1, alpha = 0.01, beta_1 = 0.9, beta_2 = 0.999, epsilon = 1e-8):
+    #theta_0 = 0
     m_t = np.zeros((2,dim))
     v_t = np.zeros((2,dim)) 
     t = 0
@@ -118,7 +116,7 @@ def adam(grad_func,iter_,dim,d,alpha = 0.01, beta_1 = 0.9, beta_2 = 0.999, epsil
         u = u - (alpha*m_cap[0])/(np.sqrt(v_cap[0])+epsilon)
         v = v - (alpha*m_cap[1])/(np.sqrt(v_cap[1])+epsilon) 
         
-		#checks if it is converged or not
+    return u,v
 
 
 
@@ -145,6 +143,7 @@ class SkipGram:
         # generating words vector for words as words (center) and words as context
         window_size = self.winSize  #context windows - exploration around the center word
         # word2idx = self.word2idx
+        #prob_neg, neg_word = probability(sentences)
         for sentence in sentences:
             indices = [word2idx[word] for word in sentence if word in vocabulary]
             # for each word as center word
@@ -161,11 +160,10 @@ class SkipGram:
                     context_word_idx = indices[context_word_pos]
                     self.idx_pairs.append((indices[center_word_pos], context_word_idx,1))
                     #negative words
+                    
                     for i in range(self.negativeRate):
                         indice_neg = np.random.randint(len(vocabulary))
-                        #prob_neg, neg_word = probability(sentences)
-                        
-                        #indice_neg = np.random.choice(1,prob_neg)
+                        #indice_neg = np.random.choice(neg_word,p=prob_neg)
                         self.idx_pairs.append((indices[center_word_pos], indice_neg,-1))
                     
                         
@@ -193,9 +191,9 @@ class SkipGram:
 
         for iteration in range(n_iter):
 
-        #Randomize observations
+        #Randomize observations : stochastic
             np.random.shuffle(self.idx_pairs)
-        
+        # to do : mini-batch gradient descent
             for id_obs in range(n_obs):
 
                 i,j,d = self.idx_pairs[id_obs,:]
@@ -204,6 +202,7 @@ class SkipGram:
                 v = V[j,:]
             
                 x = np.dot(u,v)
+                #U[i,:], V[j,:] = adam(self.nEmbed,d,u,v,x)
 
                 grad_u_i = sigmoid(-d * x) * v * d
                 U[i,:] = U[i,:] + lr * grad_u_i
@@ -243,8 +242,8 @@ class SkipGram:
 
 # Test Code
 #test = SkipGram(sentences).vocab_ids()
-vocabulary,word2idx,idx2word = vocab_ids(sentences[0:5],13000)
-test = SkipGram(sentences[0:5],vocabulary,word2idx,idx2word,nEmbed = 100)   
+vocabulary,word2idx,idx2word = vocab_ids(sentences[0:10],13000)
+test = SkipGram(sentences[0:10],vocabulary,word2idx,idx2word,nEmbed = 100,negativeRate = 5)   
 vocabulary = test.vocabulary
 word2idx = test.word2idx
 idx2word = test.idx2word
