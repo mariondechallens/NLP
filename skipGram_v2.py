@@ -94,6 +94,34 @@ def log_Likelyhood(id_pairs,U,V):
 
     return ll
 
+def adam(grad_func,iter_,dim,d,alpha = 0.01, beta_1 = 0.9, beta_2 = 0.999, epsilon = 1e-8):
+    #theta_0 = 0	
+    u = np.random.randn(dim)
+    v = np.random.randn(dim)
+    x = np.dot(u,v)
+    m_t = np.zeros((2,dim))
+    v_t = np.zeros((2,dim)) 
+    t = 0
+    
+    while (t<iter_):
+        t+=1
+        g_t_i = sigmoid(-d * x) * v * d
+        g_t_j = sigmoid(-d * x) * u * d
+        g_t = np.array([g_t_i,g_t_j])
+        #g_t = grad_func(theta_0)		#computes the gradient
+        m_t = beta_1*m_t + (1-beta_1)*g_t	#updates the moving averages of the gradient
+        v_t = beta_2*v_t + (1-beta_2)*(g_t*g_t)	#updates the moving averages of the squared gradient
+        m_cap = m_t/(1-(beta_1**t))		#calculates the bias-corrected estimates of the gradient
+        v_cap = v_t/(1-(beta_2**t))		#calculates the bias-corrected estimates of the squared gradient
+								
+        #theta_0 = theta_0 - (alpha*m_cap)/(np.sqrt(v_cap)+epsilon)	#updates the parameters
+        u = u - (alpha*m_cap[0])/(np.sqrt(v_cap[0])+epsilon)
+        v = v - (alpha*m_cap[1])/(np.sqrt(v_cap[1])+epsilon) 
+        
+		#checks if it is converged or not
+
+
+
 class SkipGram:
     def __init__(self,sentences,vocabulary,word2idx,idx2word,nEmbed=100, negativeRate=5, winSize = 2, minCount = 5):#winSize = 5
 
@@ -137,7 +165,7 @@ class SkipGram:
                         indice_neg = np.random.randint(len(vocabulary))
                         #prob_neg, neg_word = probability(sentences)
                         
-                        #indice_neg = np.random.choice(list(neg_word),prob_neg)
+                        #indice_neg = np.random.choice(1,prob_neg)
                         self.idx_pairs.append((indices[center_word_pos], indice_neg,-1))
                     
                         
