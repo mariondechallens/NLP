@@ -67,12 +67,14 @@ def vocab_ids(sentences,n_most=13000):
     # probabilité de tirage des paires négatives
 def probability(sentences):
     sentences_joint = [inner for outer in sentences for inner in outer]
-    sentences_clean = [word for word in sentences_joint if word.isalpha()==True]
     sentences_count = Counter(sentences_joint)
     sentences_most_frqt = sentences_count.most_common(13000)
-    prob = np.array([x[1]/len(sentences_clean) for x in sentences_most_frqt if x[0].isalpha()==True]) #occurence proba
-
-    return  [p**(3/4)/ sum(prob**(3/4)) for p in prob]
+    select_word = np.random.randint(len(sentences_most_frqt),size=32)
+    select_word2 = [sentences_most_frqt[i] for i in select_word]
+    total = sum(x[1] for x in select_word2 if x[0].isalpha()==True)
+    prob = np.array([x[1]/total for x in select_word2 if x[0].isalpha()==True]) #occurence proba
+    prob_neg = [p**(3/4)/ sum(prob**(3/4)) for p in prob]
+    return  prob_neg, select_word
 
 def sigmoid(x):  
     return 1 / (1 + np.exp(-x))
@@ -105,7 +107,6 @@ class SkipGram:
         self.idx_pairs = []
         self.sentences = sentences 
         self.voc_size = len(vocabulary)
-        self.proba = probability(sentences)
     ########################################################################################################
     #1. Preprocessing Steps#
     ########################################################################################################
@@ -134,7 +135,9 @@ class SkipGram:
                     #negative words
                     for i in range(self.negativeRate):
                         indice_neg = np.random.randint(len(vocabulary))
-                        #indice_neg = np.random.choice(self.voc_size,self.proba)
+                        #prob_neg, neg_word = probability(sentences)
+                        
+                        #indice_neg = np.random.choice(list(neg_word),prob_neg)
                         self.idx_pairs.append((indices[center_word_pos], indice_neg,-1))
                     
                         
@@ -186,12 +189,17 @@ class SkipGram:
         
         return U,V,ll
     
-    def similarity(self,word1,word2,U,V):
-        id1 = self.word2idx[word1]
-        id2 = self.word2idx[word2]
+    def similarity(self,word1,word2,U): # similar if we can replace the word1 by the word2, they appear in the same context
+        if word1 not in word2idx.keys():
+            id1 = 0
+        if word2 not in word2idx.keys():
+            id2 = 0
+        else:
+            id1 = self.word2idx[word1]
+            id2 = self.word2idx[word2]
         u = U[id1,:]
-        v = V[id2,:]
-        s = round(np.dot(u,v)/(np.linalg.norm(u)*np.linalg.norm(v)),3)
+        v = U[id2,:]
+        s = round(np.dot(u,v)/(np.linalg.norm(u)*np.linalg.norm(v)),3) #cosine 
         print('Similarity : ', s)
 
     
@@ -218,20 +226,20 @@ test_id_pairs = test.create_pairs_pos_neg()
 U,V,ll = test.train(n_iter = 3)
 
 #test paire pos
-i,j,d = test_id_pairs[6,:]
+i,j,d = test_id_pairs[0,:]
 u = U[i,:]
 v = V[j,:]
 x = np.dot(u,v)
 p = sigmoid(d*x)
 
 #test paire neg
-i,j,d = test_id_pairs[7,:]
+i,j,d = test_id_pairs[1,:]
 u = U[i,:]
 v = V[j,:]
 x = np.dot(u,v)
 p = sigmoid(d*x)
 
-test.similarity('her','best',U,V)
+test.similarity('boy','girl',U,V) ## mauvais 
 
 
 
