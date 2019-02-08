@@ -203,6 +203,13 @@ class SkipGram:
         #Randomize observations : stochastic
             np.random.shuffle(self.idx_pairs)
         # to do : mini-batch gradient descent
+           ''' indices = np.random.permutation(len(self.idx_pairs))
+            U_b = U[indices,:]
+            V_b = V[indices,:]  #revient à faire shuffle
+            for id_obs in range(0,len(self.idx_pairs,batch_size)):
+                u = U_b[id_obs:id_obs+batch_size]
+                v = V_b[id_obs:id_obs+batch_size]
+                x = np.matmul(u,v.transpose())'''
             for id_obs in range(n_obs):
 
                 i,j,d = self.idx_pairs[id_obs,:]
@@ -221,7 +228,7 @@ class SkipGram:
             
         # We compute the likelyhood at the end of the current iteration
             ll = log_Likelyhood(self.idx_pairs,U,V)
-            if iteration%1000 == 0:
+            if iteration%100 == 0:
                 print("likelyhood at step ",int(iteration + 1)," : ",ll)
         
         return U,V,ll
@@ -252,15 +259,15 @@ class SkipGram:
 
 # Test Code
 #test = SkipGram(sentences).vocab_ids()
-vocabulary,word2idx,idx2word = vocab_ids(sentences[0:5],13000)
-test = SkipGram(sentences[0:5],vocabulary,word2idx,idx2word,nEmbed = 100,negativeRate = 5)   
+vocabulary,word2idx,idx2word = vocab_ids(sentences[0:200],13000)
+test = SkipGram(sentences[0:200],vocabulary,word2idx,idx2word,nEmbed = 100,negativeRate = 5)   
 vocabulary = test.vocabulary
 word2idx = test.word2idx
 idx2word = test.idx2word
 test_id_pairs = test.create_pairs_pos_neg()
 
 
-U,V,ll = test.train(n_iter = 3000)
+U,V,ll = test.train(n_iter = 300)
 
 #test paire pos
 i,j,d = test_id_pairs[0,:]
@@ -270,13 +277,13 @@ x = np.dot(u,v)
 p = sigmoid(d*x)
 
 #test paire neg
-i,j,d = test_id_pairs[4,:]
+i,j,d = test_id_pairs[3,:]
 u = U[i,:]
 v = V[j,:]
 x = np.dot(u,v)
 p = sigmoid(d*x)
 
-test.similarity('boy','girl',U) ## mauvais 
+test.similarity('blue','white',U) ## mauvais 
 
 
 
