@@ -48,7 +48,14 @@ def loadPairs(path):
     pairs = zip(data['word1'],data['word2'],data['similarity'])
     return pairs
 
-sentences = text2sentences(filename)
+def cleaning(sentences) :
+    sent_clean = []
+    for sentence in sentences :
+        sentence2 = [word for word in sentence if word.isalpha() == True]
+        sent_clean.append(sentence2)
+    return sent_clean
+
+sentences = cleaning(text2sentences(filename))
 ########################
 
 def vocab_ids(sentences,n_most=13000):
@@ -143,9 +150,10 @@ class SkipGram:
         # generating words vector for words as words (center) and words as context
         window_size = self.winSize  #context windows - exploration around the center word
         # word2idx = self.word2idx
-        #prob_neg, neg_word = probability(sentences)
-        for sentence in sentences:
-            indices = [word2idx[word] for word in sentence if word in vocabulary]
+        
+        for sentence in self.sentences:
+            
+            indices = [self.word2idx[word] for word in sentence if word in self.vocabulary]
             # for each word as center word
             for center_word_pos in range(len(indices)):
                 # for each window position
@@ -162,8 +170,9 @@ class SkipGram:
                     #negative words
                     
                     for i in range(self.negativeRate):
-                        indice_neg = np.random.randint(len(vocabulary))
-                        #indice_neg = np.random.choice(neg_word,p=prob_neg)
+                        #indice_neg = np.random.randint(len(vocabulary))
+                        prob_neg, neg_word = probability(self.sentences)
+                        indice_neg = np.random.choice(neg_word,p=prob_neg)
                         self.idx_pairs.append((indices[center_word_pos], indice_neg,-1))
                     
                         
@@ -212,7 +221,8 @@ class SkipGram:
             
         # We compute the likelyhood at the end of the current iteration
             ll = log_Likelyhood(self.idx_pairs,U,V)
-            print("likelyhood at step ",int(iteration + 1)," : ",ll)
+            if iteration%1000 == 0:
+                print("likelyhood at step ",int(iteration + 1)," : ",ll)
         
         return U,V,ll
     
@@ -242,15 +252,15 @@ class SkipGram:
 
 # Test Code
 #test = SkipGram(sentences).vocab_ids()
-vocabulary,word2idx,idx2word = vocab_ids(sentences[0:10],13000)
-test = SkipGram(sentences[0:10],vocabulary,word2idx,idx2word,nEmbed = 100,negativeRate = 5)   
+vocabulary,word2idx,idx2word = vocab_ids(sentences[0:5],13000)
+test = SkipGram(sentences[0:5],vocabulary,word2idx,idx2word,nEmbed = 100,negativeRate = 5)   
 vocabulary = test.vocabulary
 word2idx = test.word2idx
 idx2word = test.idx2word
 test_id_pairs = test.create_pairs_pos_neg()
 
 
-U,V,ll = test.train(n_iter = 3)
+U,V,ll = test.train(n_iter = 3000)
 
 #test paire pos
 i,j,d = test_id_pairs[0,:]
@@ -260,13 +270,13 @@ x = np.dot(u,v)
 p = sigmoid(d*x)
 
 #test paire neg
-i,j,d = test_id_pairs[1,:]
+i,j,d = test_id_pairs[4,:]
 u = U[i,:]
 v = V[j,:]
 x = np.dot(u,v)
 p = sigmoid(d*x)
 
-test.similarity('boy','girl',U,V) ## mauvais 
+test.similarity('boy','girl',U) ## mauvais 
 
 
 
