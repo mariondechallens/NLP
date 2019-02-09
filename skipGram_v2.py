@@ -27,6 +27,7 @@ __emails__  = ['jiahui.hu@student-cs.fr','mariondechallens@gmail.com']
 import os
 PATH_TO_DATA = "C:/Users/Admin/Documents/Centrale Paris/3A/OMA/Deep Learning/nlp_project/nlp_project/data/"
 #PATH_TO_DATA = "C:/Users/Sophie HU/Desktop/CentraleSupelec/DL/NLP/nlp_project/nlp_project/data"
+PATH_TO_GIT = "C:/Users/Admin/Documents/GitHub/NLP/"
 filename = os.path.join(PATH_TO_DATA, 'sentences.txt')
 
 
@@ -56,6 +57,16 @@ def cleaning(sentences) :
     return sent_clean
 
 sentences = cleaning(text2sentences(filename))
+
+###################Amelioration######################################
+from nltk.tokenize import word_tokenize
+from nltk.stem.snowball import SnowballStemmer
+# instanciation du stemmer
+stemmer = SnowballStemmer('english')
+#Create a function Stem
+def stem(text):
+    return ' '.join([stemmer.stem(word) for word in text])
+stem_sent = [stem(s) for s in sentences]
 ########################
 
 def vocab_ids(sentences,n_most=13000):
@@ -199,17 +210,19 @@ class SkipGram:
         n_obs = self.idx_pairs.shape[0]
 
         for iteration in range(n_iter):
-
         #Randomize observations : stochastic
             np.random.shuffle(self.idx_pairs)
         # to do : mini-batch gradient descent
-           ''' indices = np.random.permutation(len(self.idx_pairs))
-            U_b = U[indices,:]
-            V_b = V[indices,:]  #revient à faire shuffle
-            for id_obs in range(0,len(self.idx_pairs,batch_size)):
-                u = U_b[id_obs:id_obs+batch_size]
-                v = V_b[id_obs:id_obs+batch_size]
-                x = np.matmul(u,v.transpose())'''
+            if (1==0):
+                
+                indices = np.random.permutation(len(self.idx_pairs))
+                U_b = U[indices,:]
+                V_b = V[indices,:]  #revient à faire shuffle
+                for id_obs in range(0,len(self.idx_pairs,batch_size)):            
+                    u = U_b[id_obs:id_obs+batch_size]
+                    v = V_b[id_obs:id_obs+batch_size]
+                    x = np.matmul(u,v.transpose())  
+               
             for id_obs in range(n_obs):
 
                 i,j,d = self.idx_pairs[id_obs,:]
@@ -228,46 +241,66 @@ class SkipGram:
             
         # We compute the likelyhood at the end of the current iteration
             ll = log_Likelyhood(self.idx_pairs,U,V)
-            if iteration%100 == 0:
+            if iteration%1 == 0:
                 print("likelyhood at step ",int(iteration + 1)," : ",ll)
         
         return U,V,ll
     
     def similarity(self,word1,word2,U): # similar if we can replace the word1 by the word2, they appear in the same context
-        if word1 not in word2idx.keys():
-            id1 = 0
-        if word2 not in word2idx.keys():
-            id2 = 0
+        if word1 not in self.word2idx.keys() or word2 not in self.word2idx.keys():
+            print('At least of the words is not in the vocabulary')
         else:
             id1 = self.word2idx[word1]
             id2 = self.word2idx[word2]
-        u = U[id1,:]
-        v = U[id2,:]
-        s = round(np.dot(u,v)/(np.linalg.norm(u)*np.linalg.norm(v)),3) #cosine 
-        print('Similarity : ', s)
+            u = U[id1,:]
+            v = U[id2,:]
+            s = round(np.dot(u,v)/(np.linalg.norm(u)*np.linalg.norm(v)),3) #cosine 
+            print('Similarity : ', s)
 
     
 
-'''    def save(self,path):
+    def save(self,U,V):
+#        res = pd.DataFrame(list(zip(self.vocabulary, U)),columns=['vocabulary','vector'])
+#        res=res.set_index('vocabulary')
+#        res.to_csv(filename,index=False, header=False)
+        voc = pd.DataFrame(self.vocabulary,columns=['vocab'])
+        # center words matrix
+        emb_w = pd.DataFrame(U)
+        emb_w = pd.concat([voc, emb_w], axis=1, sort=False)
+        emb_w = emb_w.set_index('vocab')
+        emb_w.to_csv(PATH_TO_GIT +'emb_word.csv',index=True, header=False)
+        
+        #context words matrix
+        emb_c = pd.DataFrame(V)
+        emb_c = pd.concat([voc, emb_c], axis=1, sort=False)
+        emb_c = emb_c.set_index('vocab')
+        emb_c.to_csv(PATH_TO_GIT +'emb_context.csv',index=True, header=False)
+        
+        
+        
+    
+    @staticmethod
+    def load(path):
+        raise NotImplementedError('implement it!')
+
         
 
     
        
 
-    def load(path):
-        '''
+  
 
 # Test Code
 #test = SkipGram(sentences).vocab_ids()
-vocabulary,word2idx,idx2word = vocab_ids(sentences[0:200],13000)
-test = SkipGram(sentences[0:200],vocabulary,word2idx,idx2word,nEmbed = 100,negativeRate = 5)   
+vocabulary,word2idx,idx2word = vocab_ids(sentences[0:100],13000)
+test = SkipGram(sentences[0:100],vocabulary,word2idx,idx2word,nEmbed = 100,negativeRate = 5)   
 vocabulary = test.vocabulary
 word2idx = test.word2idx
 idx2word = test.idx2word
 test_id_pairs = test.create_pairs_pos_neg()
 
 
-U,V,ll = test.train(n_iter = 300)
+U,V,ll = test.train(n_iter = 50)
 
 #test paire pos
 i,j,d = test_id_pairs[0,:]
@@ -283,7 +316,11 @@ v = V[j,:]
 x = np.dot(u,v)
 p = sigmoid(d*x)
 
-test.similarity('blue','white',U) ## mauvais 
+test.similarity('for','blue',U) ## mauvais 
+test.similarity('quickly','interest',U) ## car des mots choisis ne sont pas dans la word2idx
+test.save('output.csv',U)
+
+
 
 
 
