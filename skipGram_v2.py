@@ -27,7 +27,7 @@ __emails__  = ['jiahui.hu@student-cs.fr','mariondechallens@gmail.com']
 import os
 PATH_TO_DATA = "C:/Users/Admin/Documents/Centrale Paris/3A/OMA/Deep Learning/nlp_project/nlp_project/data/"
 #PATH_TO_DATA = "C:/Users/Sophie HU/Desktop/CentraleSupelec/DL/NLP/nlp_project/nlp_project/data"
-PATH_TO_GIT = "C:/Users/Admin/Documents/GitHub/NLP/"
+PATH_TO_NLP = "C:/Users/Admin/Documents/Centrale Paris/3A/OMA/NLP/"
 filename = os.path.join(PATH_TO_DATA, 'sentences.txt')
 
 
@@ -49,6 +49,7 @@ def loadPairs(path):
     pairs = zip(data['word1'],data['word2'],data['similarity'])
     return pairs
 
+# removing characters we don't want (. # numbers)
 def cleaning(sentences) :
     sent_clean = []
     for sentence in sentences :
@@ -156,14 +157,13 @@ class SkipGram:
     ########################################################################################################
     ## generating vocabulary and ids from observed data(most frequent words)
 
-    def create_pairs_pos_neg(self):
-        ''' This function builds center word and context word vectors by one hot encoding '''
+    def create_pairs_pos_neg(self): #cooccurence matrix
         # generating words vector for words as words (center) and words as context
         window_size = self.winSize  #context windows - exploration around the center word
         # word2idx = self.word2idx
         
         for sentence in self.sentences:
-            
+            prob_neg, neg_word = probability(self.sentences)
             indices = [self.word2idx[word] for word in sentence if word in self.vocabulary]
             # for each word as center word
             for center_word_pos in range(len(indices)):
@@ -182,7 +182,7 @@ class SkipGram:
                     
                     for i in range(self.negativeRate):
                         #indice_neg = np.random.randint(len(self.vocabulary))
-                        prob_neg, neg_word = probability(self.sentences)
+                        
                         indice_neg = np.random.choice(neg_word,p=prob_neg)
                         self.idx_pairs.append((indices[center_word_pos], indice_neg,-1))
                     
@@ -197,7 +197,7 @@ class SkipGram:
     # 2. Skip-Gram#
     ########################################################################################################
     #  building center word and context word vectors by one hot encoding
-    def train(self, n_iter = 20,lr = 0.002):
+    def train(self, n_iter = 20,lr = 0.002,batch_size = 20):
 
     # We initiate our embedding by using normal multivariate distribution
         U = np.random.randn(self.voc_size,self.nEmbed)
@@ -208,22 +208,30 @@ class SkipGram:
     
         #id_pairs = np.array(self.idx_pairs)
         n_obs = self.idx_pairs.shape[0]
+        q = n_obs//batch_size
 
         for iteration in range(n_iter):
         #Randomize observations : stochastic
             np.random.shuffle(self.idx_pairs)
         # to do : mini-batch gradient descent
-            if (1==0):
-                
-                indices = np.random.permutation(len(self.idx_pairs))
-                U_b = U[indices,:]
-                V_b = V[indices,:]  #revient à faire shuffle
-                for id_obs in range(0,len(self.idx_pairs,batch_size)):            
-                    u = U_b[id_obs:id_obs+batch_size]
-                    v = V_b[id_obs:id_obs+batch_size]
-                    x = np.matmul(u,v.transpose())  
+            for id_obs in range(0,q*batch_size,batch_size):
+                #print(id_obs)
+                batch = self.idx_pairs[id_obs:id_obs+batch_size,:]
+                indice_i  = [batch[i,0] for i in range(batch_size)]
+                indice_j  = [batch[i,1] for i in range(batch_size)]
+                indice_d  = [batch[i,2] for i in range(batch_size)]
+                    
+                u = U[indice_i,:]
+                v = V[indice_j,:]  
+                    
+                grad_u_m = np.mean([sigmoid(-indice_d[l] * np.dot(u[l],v[l])) * v[l] * indice_d[l] for l in range(batch_size)])
+                U[indice_i,:] = U[indice_i,:] + lr * grad_u_m
+                    
+                grad_v_m = np.mean([sigmoid(-indice_d[l] * np.dot(u[l],v[l])) * u[l] * indice_d[l] for l in range(batch_size)])
+                V[indice_j,:] = V[indice_j,:] + lr * grad_v_m
+                    
                
-            for id_obs in range(n_obs):
+            '''for id_obs in range(n_obs):
 
                 i,j,d = self.idx_pairs[id_obs,:]
                
@@ -237,18 +245,18 @@ class SkipGram:
                 U[i,:] = U[i,:] + lr * grad_u_i
             
                 grad_v_j = sigmoid(-d * x) * u * d       
-                V[j,:] = V[j,:] + lr * grad_v_j
+                V[j,:] = V[j,:] + lr * grad_v_j'''
             
         # We compute the likelyhood at the end of the current iteration
             ll = log_Likelyhood(self.idx_pairs,U,V)
-            if iteration%1 == 0:
+            if iteration%1000 == 0:
                 print("likelyhood at step ",int(iteration + 1)," : ",ll)
         
         return U,V,ll
     
     def similarity(self,word1,word2,U): # similar if we can replace the word1 by the word2, they appear in the same context
         if word1 not in self.word2idx.keys() or word2 not in self.word2idx.keys():
-            print('At least of the words is not in the vocabulary')
+            print('At least one of the words is not in the vocabulary')
         else:
             id1 = self.word2idx[word1]
             id2 = self.word2idx[word2]
@@ -259,7 +267,7 @@ class SkipGram:
 
     
 
-    def save(self,U,V):
+    def save(self,path,U,V):
 #        res = pd.DataFrame(list(zip(self.vocabulary, U)),columns=['vocabulary','vector'])
 #        res=res.set_index('vocabulary')
 #        res.to_csv(filename,index=False, header=False)
@@ -268,20 +276,23 @@ class SkipGram:
         emb_w = pd.DataFrame(U)
         emb_w = pd.concat([voc, emb_w], axis=1, sort=False)
         emb_w = emb_w.set_index('vocab')
-        emb_w.to_csv(PATH_TO_GIT +'emb_word.csv',index=True, header=False)
+        emb_w.to_csv(path +'emb_word.csv',index=True)
         
         #context words matrix
         emb_c = pd.DataFrame(V)
         emb_c = pd.concat([voc, emb_c], axis=1, sort=False)
         emb_c = emb_c.set_index('vocab')
-        emb_c.to_csv(PATH_TO_GIT +'emb_context.csv',index=True, header=False)
+        emb_c.to_csv(path +'emb_context.csv',index=True)
         
         
         
     
     @staticmethod
     def load(path):
-        raise NotImplementedError('implement it!')
+        emb_word = pd.read_csv(path + 'emb_word.csv').set_index('vocab')
+        emb_cont = pd.read_csv(path + 'emb_context.csv').set_index('vocab')
+        return emb_word, emb_cont
+        
 
         
 
@@ -300,7 +311,7 @@ idx2word = test.idx2word
 test_id_pairs = test.create_pairs_pos_neg()
 
 
-U,V,ll = test.train(n_iter = 50)
+U,V,ll = test.train(n_iter = 5000)
 
 #test paire pos
 i,j,d = test_id_pairs[0,:]
@@ -316,9 +327,10 @@ v = V[j,:]
 x = np.dot(u,v)
 p = sigmoid(d*x)
 
-test.similarity('for','blue',U) ## mauvais 
+test.similarity('boy','girl',U) ## mauvais 
 test.similarity('quickly','interest',U) ## car des mots choisis ne sont pas dans la word2idx
-test.save('output.csv',U)
+test.save(PATH_TO_NLP,U,V)
+word, context = test.load(PATH_TO_NLP)
 
 
 

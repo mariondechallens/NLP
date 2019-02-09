@@ -4,26 +4,17 @@ The goal of the first exercise is to implement skip-gram with negative-sampling 
 
 ## Implementation : our thought process
 
-Use the package manager [pip](https://pip.pypa.io/en/stable/) to install foobar.
+The first step of our thought process is the preprocessing of the data. After loading the sentences from the file, we need to clean them in order to remove all the characters we don't want such as the dot, the #, the figures and so on. It is done in the function named cleaning.
+Then, we need to build a vocabulary and tokens for each word of the vocabulary. It is done in the function vocab_ids.
 
-```bash
-pip install foobar
-```
+Now that we have our sentences cleaned and the associated vocabulary, we can implement the skip-gram with negative sampling.
+For that, we define for each word its context words namely the words that are situated in a window of two words of the center word in the sentence. The pairs (center word, context word) are positive pairs for which we assign the mark 1.
+Negative sampling implies to define negative pairs as well that will be used to train the skip-gram. For each positive pair marked by 1, we add k negative pairs marked by -1. The negative pairs are computed by taking randomly a word among all the vocabulary as a context word for the center word.
+Thus, we have created a cooccurences matrix with positive and negative words (function create_pairs_pos_neg).
+This matrix will be used in the training of the skip-gram.
 
-## Usage
 
-```python
-import foobar
 
-foobar.pluralize('word') # returns 'words'
-foobar.pluralize('goose') # returns 'geese'
-foobar.singularize('phenomena') # returns 'phenomenon'
-```
-
-## Contributing
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
-
-Please make sure to update tests as appropriate.
 
 ## Additional resources : web sites and papers
 
