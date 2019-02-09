@@ -170,7 +170,7 @@ class SkipGram:
                     #negative words
                     
                     for i in range(self.negativeRate):
-                        #indice_neg = np.random.randint(len(vocabulary))
+                        #indice_neg = np.random.randint(len(self.vocabulary))
                         prob_neg, neg_word = probability(self.sentences)
                         indice_neg = np.random.choice(neg_word,p=prob_neg)
                         self.idx_pairs.append((indices[center_word_pos], indice_neg,-1))

@@ -106,8 +106,8 @@ class SkipGram:
         # generating words vector for words as words (center) and words as context
         window_size = self.winSize  #context windows - exploration around the center word
         # word2idx = self.word2idx
-        for sentence in sentences:
-            indices = [word2idx[word] for word in sentence if word in vocabulary]
+        for sentence in self.sentences:
+            indices = [self.word2idx[word] for word in sentence if word in self.vocabulary]
             # for each word as center word
             for center_word_pos in range(len(indices)):
                 # for each window position
@@ -123,8 +123,8 @@ class SkipGram:
                     self.idx_pairs.append((indices[center_word_pos], context_word_idx,1))
                     #negative words
                     for i in range(self.negativeRate):
-                        indice_neg = np.random.randint(len(vocabulary))
-                        #prob_neg, neg_word = probability(sentences)
+                        indice_neg = np.random.randint(len(self.vocabulary))
+                        #prob_neg, neg_word = probability(self.sentences)
                         
                         #indice_neg = np.random.choice(list(neg_word),prob_neg)
                         self.idx_pairs.append((indices[center_word_pos], indice_neg,-1))
