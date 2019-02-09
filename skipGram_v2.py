@@ -99,7 +99,7 @@ def probability(sentences):
 def sigmoid(x):  
     return 1 / (1 + np.exp(-x))
 
-def log_Likelyhood(id_pairs,U,V):
+def log_Likelihood(id_pairs,U,V):
     n_obs = id_pairs.shape[0]   
     ll = 0
     for id_obs in range(n_obs):
@@ -132,8 +132,9 @@ def adam(dim,d,u,v,x,iter_ = 1, alpha = 0.01, beta_1 = 0.9, beta_2 = 0.999, epsi
         v_cap = v_t/(1-(beta_2**t))		#calculates the bias-corrected estimates of the squared gradient
 								
         #theta_0 = theta_0 - (alpha*m_cap)/(np.sqrt(v_cap)+epsilon)	#updates the parameters
-        u = u - (alpha*m_cap[0])/(np.sqrt(v_cap[0])+epsilon)
-        v = v - (alpha*m_cap[1])/(np.sqrt(v_cap[1])+epsilon) 
+        u = u + (alpha*m_cap[0])/(np.sqrt(v_cap[0])+epsilon) #attention -
+        v = v + (alpha*m_cap[1])/(np.sqrt(v_cap[1])+epsilon) 
+        #print(sigmoid(d*np.dot(u,v)))
         
     return u,v
 
@@ -203,8 +204,8 @@ class SkipGram:
         U = np.random.randn(self.voc_size,self.nEmbed)
         V = np.random.randn(self.voc_size,self.nEmbed)
     
-        ll = log_Likelyhood(self.idx_pairs,U,V)
-        print("initial likelyhood",ll)
+        ll = log_Likelihood(self.idx_pairs,U,V)
+        print("initial likelihood",ll)
     
         #id_pairs = np.array(self.idx_pairs)
         n_obs = self.idx_pairs.shape[0]
@@ -214,7 +215,7 @@ class SkipGram:
         #Randomize observations : stochastic
             np.random.shuffle(self.idx_pairs)
         # to do : mini-batch gradient descent
-            for id_obs in range(0,q*batch_size,batch_size):
+            '''for id_obs in range(0,q*batch_size,batch_size):
                 #print(id_obs)
                 batch = self.idx_pairs[id_obs:id_obs+batch_size,:]
                 indice_i  = [batch[i,0] for i in range(batch_size)]
@@ -224,14 +225,14 @@ class SkipGram:
                 u = U[indice_i,:]
                 v = V[indice_j,:]  
                     
-                grad_u_m = np.mean([sigmoid(-indice_d[l] * np.dot(u[l],v[l])) * v[l] * indice_d[l] for l in range(batch_size)])
-                U[indice_i,:] = U[indice_i,:] + lr * grad_u_m
+                #grad_u_m = np.mean([sigmoid(-indice_d[l] * np.dot(u[l],v[l])) * v[l] * indice_d[l] for l in range(batch_size)])
+                #U[indice_i,:] = U[indice_i,:] + lr * grad_u_m
                     
-                grad_v_m = np.mean([sigmoid(-indice_d[l] * np.dot(u[l],v[l])) * u[l] * indice_d[l] for l in range(batch_size)])
-                V[indice_j,:] = V[indice_j,:] + lr * grad_v_m
-                    
+                #grad_v_m = np.mean([sigmoid(-indice_d[l] * np.dot(u[l],v[l])) * u[l] * indice_d[l] for l in range(batch_size)])
+                #V[indice_j,:] = V[indice_j,:] + lr * grad_v_m'''
+
                
-            '''for id_obs in range(n_obs):
+            for id_obs in range(n_obs):
 
                 i,j,d = self.idx_pairs[id_obs,:]
                
@@ -239,18 +240,18 @@ class SkipGram:
                 v = V[j,:]
             
                 x = np.dot(u,v)
-                #U[i,:], V[j,:] = adam(self.nEmbed,d,u,v,x)
+                U[i,:], V[j,:] = adam(self.nEmbed,d,u,v,x)
 
-                grad_u_i = sigmoid(-d * x) * v * d
-                U[i,:] = U[i,:] + lr * grad_u_i
+                #grad_u_i = sigmoid(-d * x) * v * d
+                #U[i,:] = U[i,:] + lr * grad_u_i
             
-                grad_v_j = sigmoid(-d * x) * u * d       
-                V[j,:] = V[j,:] + lr * grad_v_j'''
+                #grad_v_j = sigmoid(-d * x) * u * d       
+                #V[j,:] = V[j,:] + lr * grad_v_j
             
         # We compute the likelyhood at the end of the current iteration
-            ll = log_Likelyhood(self.idx_pairs,U,V)
-            if iteration%1000 == 0:
-                print("likelyhood at step ",int(iteration + 1)," : ",ll)
+            ll = log_Likelihood(self.idx_pairs,U,V)
+            if iteration%1 == 0:
+                print("likelihood at step ",int(iteration + 1)," : ",ll)
         
         return U,V,ll
     
@@ -294,40 +295,22 @@ class SkipGram:
         return emb_word, emb_cont
         
 
-        
 
-    
-       
-
-  
 
 # Test Code
 #test = SkipGram(sentences).vocab_ids()
-vocabulary,word2idx,idx2word = vocab_ids(sentences[0:100],13000)
-test = SkipGram(sentences[0:100],vocabulary,word2idx,idx2word,nEmbed = 100,negativeRate = 5)   
+vocabulary,word2idx,idx2word = vocab_ids(sentences[0:500],13000)
+test = SkipGram(sentences[0:500],vocabulary,word2idx,idx2word,nEmbed = 100,negativeRate = 5)   
 vocabulary = test.vocabulary
 word2idx = test.word2idx
 idx2word = test.idx2word
 test_id_pairs = test.create_pairs_pos_neg()
 
 
-U,V,ll = test.train(n_iter = 5000)
+U,V,ll = test.train(n_iter = 20)
 
-#test paire pos
-i,j,d = test_id_pairs[0,:]
-u = U[i,:]
-v = V[j,:]
-x = np.dot(u,v)
-p = sigmoid(d*x)
 
-#test paire neg
-i,j,d = test_id_pairs[3,:]
-u = U[i,:]
-v = V[j,:]
-x = np.dot(u,v)
-p = sigmoid(d*x)
-
-test.similarity('boy','girl',U) ## mauvais 
+test.similarity('white','blue',U) ## mauvais 
 test.similarity('quickly','interest',U) ## car des mots choisis ne sont pas dans la word2idx
 test.save(PATH_TO_NLP,U,V)
 word, context = test.load(PATH_TO_NLP)
