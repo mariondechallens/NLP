@@ -96,6 +96,19 @@ def probability(sentences):
     prob_neg = [p**(3/4)/ sum(prob**(3/4)) for p in prob]
     return  prob_neg, select_word
 
+def sim_matrix(n,voc,path):
+#similarity matrix
+    sim = np.zeros((n,n))
+    for i in range(n):
+        for j in range(n):
+            sim[i][j] = test.similarity(voc[i],voc[j],U)
+            
+    sim_df = pd.DataFrame(sim)
+    sim_df.index = voc
+    sim_df.columns = voc
+    sim_df.to_csv(path +'similarity.csv',index=True)
+    return sim_df
+
 def sigmoid(x):  
     return 1 / (1 + np.exp(-x))
 
@@ -134,7 +147,30 @@ def adam(dim,d,u,v,x,iter_ = 1, alpha = 0.01, beta_1 = 0.9, beta_2 = 0.999, epsi
         #theta_0 = theta_0 - (alpha*m_cap)/(np.sqrt(v_cap)+epsilon)	#updates the parameters
         u = u + (alpha*m_cap[0])/(np.sqrt(v_cap[0])+epsilon) #attention -
         v = v + (alpha*m_cap[1])/(np.sqrt(v_cap[1])+epsilon) 
-        #print(sigmoid(d*np.dot(u,v)))
+ 
+        
+    return u,v
+
+def adam_batch(dim,indice_d,u,v,batch_size,iter_ = 1, alpha = 0.01, beta_1 = 0.9, beta_2 = 0.999, epsilon = 1e-8):
+    #theta_0 = 0
+    m_t = np.zeros((2,dim))
+    v_t = np.zeros((2,dim)) 
+    t = 0
+    
+    while (t<iter_):
+        t+=1
+        g_t_i = np.array([sigmoid(-indice_d[l] * np.dot(u[l],v[l])) * v[l] * indice_d[l] for l in range(batch_size)])
+        g_t_j = np.array([sigmoid(-indice_d[l] * np.dot(u[l],v[l])) * u[l] * indice_d[l] for l in range(batch_size)])
+        g_t = np.array([np.mean(g_t_i,axis = 0),np.mean(g_t_j,axis=0)])
+        m_t = beta_1*m_t + (1-beta_1)*g_t	#updates the moving averages of the gradient
+        v_t = beta_2*v_t + (1-beta_2)*(g_t*g_t)	#updates the moving averages of the squared gradient
+        m_cap = m_t/(1-(beta_1**t))		#calculates the bias-corrected estimates of the gradient
+        v_cap = v_t/(1-(beta_2**t))		#calculates the bias-corrected estimates of the squared gradient
+								
+        #theta_0 = theta_0 - (alpha*m_cap)/(np.sqrt(v_cap)+epsilon)	#updates the parameters
+        u = u + (alpha*m_cap[0])/(np.sqrt(v_cap[0])+epsilon) #attention -
+        v = v + (alpha*m_cap[1])/(np.sqrt(v_cap[1])+epsilon) 
+ 
         
     return u,v
 
@@ -208,19 +244,15 @@ class SkipGram:
     
         ll = log_Likelihood(self.idx_pairs,U,V)
         print("initial likelihood",ll)
-    
-        #id_pairs = np.array(self.idx_pairs)
         n_obs = self.idx_pairs.shape[0]
         
-
-        for iteration in range(n_iter):
-        #Randomize observations : stochastic
-            np.random.shuffle(self.idx_pairs)
-            
-            if adam_opt == False and batch == True :
+        if adam_opt == False and batch == True :
+            print('Performing Gradient Descent with mini-batches')
+            for iteration in range(n_iter):
+                np.random.shuffle(self.idx_pairs)
                 q = n_obs//batch_size
                 for id_obs in range(0,q*batch_size,batch_size):
-                    
+                
                     batch_ = self.idx_pairs[id_obs:id_obs+batch_size,:]
                     indice_i  = [batch_[i,0] for i in range(batch_size)]
                     indice_j  = [batch_[i,1] for i in range(batch_size)]
@@ -229,14 +261,21 @@ class SkipGram:
                     u = U[indice_i,:]
                     v = V[indice_j,:]  
                     
-                    grad_u_m = np.mean([sigmoid(-indice_d[l] * np.dot(u[l],v[l])) * v[l] * indice_d[l] for l in range(batch_size)])
+                    grad_u_m = np.mean(np.array([sigmoid(-indice_d[l] * np.dot(u[l],v[l])) * v[l] * indice_d[l] for l in range(batch_size)]),axis = 0)
                     U[indice_i,:] = U[indice_i,:] + lr * grad_u_m
                     
-                    grad_v_m = np.mean([sigmoid(-indice_d[l] * np.dot(u[l],v[l])) * u[l] * indice_d[l] for l in range(batch_size)])
+                    grad_v_m = np.mean(np.array([sigmoid(-indice_d[l] * np.dot(u[l],v[l])) * u[l] * indice_d[l] for l in range(batch_size)]),axis = 0)
                     V[indice_j,:] = V[indice_j,:] + lr * grad_v_m
-
-            if adam_opt == False and batch == False :  
                 
+                ll = log_Likelihood(self.idx_pairs,U,V)
+                if iteration%1 == 0:
+                    print("likelihood at step ",int(iteration + 1)," : ",ll)
+        
+
+        if adam_opt == False and batch == False : 
+            print('Performing Gradient Descent without mini-batches')
+            for iteration in range(n_iter):
+                np.random.shuffle(self.idx_pairs)
                 for id_obs in range(n_obs):
 
                     i,j,d = self.idx_pairs[id_obs,:]
@@ -252,8 +291,15 @@ class SkipGram:
                     grad_v_j = sigmoid(-d * x) * u * d       
                     V[j,:] = V[j,:] + lr * grad_v_j
                     
-            if adam_opt == True and batch == False :  
-
+                ll = log_Likelihood(self.idx_pairs,U,V)
+                if iteration%1 == 0:
+                    print("likelihood at step ",int(iteration + 1)," : ",ll)
+        
+                    
+        if adam_opt == True and batch == False :
+            print('Performing Adam optimization without mini-batches')
+            for iteration in range(n_iter):
+                np.random.shuffle(self.idx_pairs)
                 for id_obs in range(n_obs):
 
                     i,j,d = self.idx_pairs[id_obs,:]
@@ -263,11 +309,35 @@ class SkipGram:
             
                     x = np.dot(u,v)
                     U[i,:], V[j,:] = adam(self.nEmbed,d,u,v,x)
+                
+                ll = log_Likelihood(self.idx_pairs,U,V)
+                if iteration%1 == 0:
+                    print("likelihood at step ",int(iteration + 1)," : ",ll)
+        
+            
+        if adam_opt == True and batch == True :
+            print('Performing Adam optimization with mini-batches')
+            for iteration in range(n_iter):
+                np.random.shuffle(self.idx_pairs)
+                q = n_obs//batch_size
+                for id_obs in range(0,q*batch_size,batch_size):
                     
-        # We compute the likelyhood at the end of the current iteration
-            ll = log_Likelihood(self.idx_pairs,U,V)
-            if iteration%1 == 0:
-                print("likelihood at step ",int(iteration + 1)," : ",ll)
+                    batch_ = self.idx_pairs[id_obs:id_obs+batch_size,:]
+                    indice_i  = [batch_[i,0] for i in range(batch_size)]
+                    indice_j  = [batch_[i,1] for i in range(batch_size)]
+                    indice_d  = [batch_[i,2] for i in range(batch_size)]
+                    
+                    u = U[indice_i,:]
+                    v = V[indice_j,:]
+                    
+                    U[indice_i,:],V[indice_j,:] = adam_batch(self.nEmbed,indice_d,u,v,batch_size)
+                    
+                    
+
+                    
+                ll = log_Likelihood(self.idx_pairs,U,V)
+                if iteration%1 == 0:
+                    print("likelihood at step ",int(iteration + 1)," : ",ll)
         
         return U,V,ll
     
@@ -312,17 +382,17 @@ class SkipGram:
 
 
 # Test Code
-# problem avec stem_sent, divergence de la likelihood
-vocabulary,word2idx,idx2word = vocab_ids(sentences[0:900],13000)
-test = SkipGram(sentences[0:900],vocabulary,word2idx,idx2word,nEmbed = 100,negativeRate = 5)   
-vocabulary = test.vocabulary
-word2idx = test.word2idx
-idx2word = test.idx2word
+# probleme avec stem_sent, divergence de la likelihood
+vocabulary,word2idx,idx2word = vocab_ids(sentences[0:2000],13000)
+test = SkipGram(sentences[0:2000],vocabulary,word2idx,idx2word,nEmbed = 100,negativeRate = 5)   
+
 test_id_pairs = test.create_pairs_pos_neg()
 
 
-U,V,ll = test.train(n_iter = 10)
-
+U,V,ll = test.train(n_iter = 20, adam_opt= True,batch = True)
+## augmenter nombre d'iterations pour adam?
+##mini-batch à revoir
+# probleme avec stem_sent, divergence de la likelihood ?
 
 test.similarity('boy','girl',U) ## mauvais 
 test.similarity('quickly','interest',U) ## car les mots choisis ne sont pas dans la word2idx
@@ -330,16 +400,8 @@ test.save(PATH_TO_NLP,U,V)
 word, context = test.load(PATH_TO_NLP)
 
 
-#similarity matrix
-sim = np.zeros((test.voc_size,test.voc_size))
-for i in range(test.voc_size):
-    for j in range(test.voc_size):
-        sim[i][j] = test.similarity(test.vocabulary[i],test.vocabulary[j],U)
-    
-sim_df = pd.DataFrame(sim)
-sim_df.index = test.vocabulary
-sim_df.columns = test.vocabulary
-sim_df.to_csv(PATH_TO_NLP +'similarity.csv',index=True)
+#sim_df = sim_matrix(test.voc_size,test.vocabulary,PATH_TO_NLP)
+
 
 
 if __name__ == '__main__':
