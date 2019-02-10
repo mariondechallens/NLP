@@ -12,11 +12,11 @@ import pandas as pd
 
 # useful stuff
 import numpy as np
-from scipy.special import expit
-from sklearn.preprocessing import normalize
+#from scipy.special import expit
+#from sklearn.preprocessing import normalize
 
 # ours 
-import re
+#import re
 from collections import Counter
 
 
@@ -27,7 +27,7 @@ __emails__  = ['jiahui.hu@student-cs.fr','mariondechallens@gmail.com']
 import os
 PATH_TO_DATA = "C:/Users/Admin/Documents/Centrale Paris/3A/OMA/Deep Learning/nlp_project/nlp_project/data/"
 #PATH_TO_DATA = "C:/Users/Sophie HU/Desktop/CentraleSupelec/DL/NLP/nlp_project/nlp_project/data"
-PATH_TO_NLP = "C:/Users/Admin/Documents/Centrale Paris/3A/OMA/NLP/"
+PATH_TO_NLP = "C:/Users/Admin/Documents/Centrale Paris/3A/OMA/NLP/Exo 1/"
 filename = os.path.join(PATH_TO_DATA, 'sentences.txt')
 
 
@@ -60,7 +60,7 @@ def cleaning(sentences) :
 sentences = cleaning(text2sentences(filename))
 
 ###################Amelioration######################################
-from nltk.tokenize import word_tokenize
+#from nltk.tokenize import word_tokenize
 from nltk.stem.snowball import SnowballStemmer
 # instanciation du stemmer
 stemmer = SnowballStemmer('english')
@@ -158,13 +158,14 @@ class SkipGram:
     ########################################################################################################
     ## generating vocabulary and ids from observed data(most frequent words)
 
-    def create_pairs_pos_neg(self): #cooccurence matrix
+    def create_pairs_pos_neg(self,proba = True): #cooccurence matrix
         # generating words vector for words as words (center) and words as context
         window_size = self.winSize  #context windows - exploration around the center word
         # word2idx = self.word2idx
         
         for sentence in self.sentences:
-            prob_neg, neg_word = probability(self.sentences)
+            if proba == True :
+                prob_neg, neg_word = probability(self.sentences)
             indices = [self.word2idx[word] for word in sentence if word in self.vocabulary]
             # for each word as center word
             for center_word_pos in range(len(indices)):
@@ -182,9 +183,10 @@ class SkipGram:
                     #negative words
                     
                     for i in range(self.negativeRate):
-                        #indice_neg = np.random.randint(len(self.vocabulary))
-                        
-                        indice_neg = np.random.choice(neg_word,p=prob_neg)
+                        if proba == False :
+                            indice_neg = np.random.randint(len(self.vocabulary))
+                        if proba == True :
+                            indice_neg = np.random.choice(neg_word,p=prob_neg)
                         self.idx_pairs.append((indices[center_word_pos], indice_neg,-1))
                     
                         
@@ -195,10 +197,10 @@ class SkipGram:
     ## generating negatif samples
     
     ########################################################################################################
-    # 2. Skip-Gram#
+    # 2. Skip-Gram
     ########################################################################################################
     #  building center word and context word vectors by one hot encoding
-    def train(self, n_iter = 20,lr = 0.002,batch_size = 20):
+    def train(self, n_iter = 20,lr = 0.002,batch_size = 20,adam_opt = True, batch = False):
 
     # We initiate our embedding by using normal multivariate distribution
         U = np.random.randn(self.voc_size,self.nEmbed)
@@ -209,45 +211,59 @@ class SkipGram:
     
         #id_pairs = np.array(self.idx_pairs)
         n_obs = self.idx_pairs.shape[0]
-        q = n_obs//batch_size
+        
 
         for iteration in range(n_iter):
         #Randomize observations : stochastic
             np.random.shuffle(self.idx_pairs)
-        # to do : mini-batch gradient descent
-            '''for id_obs in range(0,q*batch_size,batch_size):
-                #print(id_obs)
-                batch = self.idx_pairs[id_obs:id_obs+batch_size,:]
-                indice_i  = [batch[i,0] for i in range(batch_size)]
-                indice_j  = [batch[i,1] for i in range(batch_size)]
-                indice_d  = [batch[i,2] for i in range(batch_size)]
+            
+            if adam_opt == False and batch == True :
+                q = n_obs//batch_size
+                for id_obs in range(0,q*batch_size,batch_size):
                     
-                u = U[indice_i,:]
-                v = V[indice_j,:]  
+                    batch_ = self.idx_pairs[id_obs:id_obs+batch_size,:]
+                    indice_i  = [batch_[i,0] for i in range(batch_size)]
+                    indice_j  = [batch_[i,1] for i in range(batch_size)]
+                    indice_d  = [batch_[i,2] for i in range(batch_size)]
                     
-                #grad_u_m = np.mean([sigmoid(-indice_d[l] * np.dot(u[l],v[l])) * v[l] * indice_d[l] for l in range(batch_size)])
-                #U[indice_i,:] = U[indice_i,:] + lr * grad_u_m
+                    u = U[indice_i,:]
+                    v = V[indice_j,:]  
                     
-                #grad_v_m = np.mean([sigmoid(-indice_d[l] * np.dot(u[l],v[l])) * u[l] * indice_d[l] for l in range(batch_size)])
-                #V[indice_j,:] = V[indice_j,:] + lr * grad_v_m'''
+                    grad_u_m = np.mean([sigmoid(-indice_d[l] * np.dot(u[l],v[l])) * v[l] * indice_d[l] for l in range(batch_size)])
+                    U[indice_i,:] = U[indice_i,:] + lr * grad_u_m
+                    
+                    grad_v_m = np.mean([sigmoid(-indice_d[l] * np.dot(u[l],v[l])) * u[l] * indice_d[l] for l in range(batch_size)])
+                    V[indice_j,:] = V[indice_j,:] + lr * grad_v_m
 
+            if adam_opt == False and batch == False :  
+                
+                for id_obs in range(n_obs):
+
+                    i,j,d = self.idx_pairs[id_obs,:]
                
-            for id_obs in range(n_obs):
+                    u = U[i,:]
+                    v = V[j,:]
+            
+                    x = np.dot(u,v)
 
-                i,j,d = self.idx_pairs[id_obs,:]
+                    grad_u_i = sigmoid(-d * x) * v * d
+                    U[i,:] = U[i,:] + lr * grad_u_i
+            
+                    grad_v_j = sigmoid(-d * x) * u * d       
+                    V[j,:] = V[j,:] + lr * grad_v_j
+                    
+            if adam_opt == True and batch == False :  
+
+                for id_obs in range(n_obs):
+
+                    i,j,d = self.idx_pairs[id_obs,:]
                
-                u = U[i,:]
-                v = V[j,:]
+                    u = U[i,:]
+                    v = V[j,:]
             
-                x = np.dot(u,v)
-                U[i,:], V[j,:] = adam(self.nEmbed,d,u,v,x)
-
-                #grad_u_i = sigmoid(-d * x) * v * d
-                #U[i,:] = U[i,:] + lr * grad_u_i
-            
-                #grad_v_j = sigmoid(-d * x) * u * d       
-                #V[j,:] = V[j,:] + lr * grad_v_j
-            
+                    x = np.dot(u,v)
+                    U[i,:], V[j,:] = adam(self.nEmbed,d,u,v,x)
+                    
         # We compute the likelyhood at the end of the current iteration
             ll = log_Likelihood(self.idx_pairs,U,V)
             if iteration%1 == 0:
@@ -258,20 +274,18 @@ class SkipGram:
     def similarity(self,word1,word2,U): # similar if we can replace the word1 by the word2, they appear in the same context
         if word1 not in self.word2idx.keys() or word2 not in self.word2idx.keys():
             print('At least one of the words is not in the vocabulary')
+            s = -10
         else:
             id1 = self.word2idx[word1]
             id2 = self.word2idx[word2]
             u = U[id1,:]
             v = U[id2,:]
             s = round(np.dot(u,v)/(np.linalg.norm(u)*np.linalg.norm(v)),3) #cosine 
-            print('Similarity : ', s)
+        return s
 
     
 
     def save(self,path,U,V):
-#        res = pd.DataFrame(list(zip(self.vocabulary, U)),columns=['vocabulary','vector'])
-#        res=res.set_index('vocabulary')
-#        res.to_csv(filename,index=False, header=False)
         voc = pd.DataFrame(self.vocabulary,columns=['vocab'])
         # center words matrix
         emb_w = pd.DataFrame(U)
@@ -298,26 +312,31 @@ class SkipGram:
 
 
 # Test Code
-#test = SkipGram(sentences).vocab_ids()
-vocabulary,word2idx,idx2word = vocab_ids(sentences[0:500],13000)
-test = SkipGram(sentences[0:500],vocabulary,word2idx,idx2word,nEmbed = 100,negativeRate = 5)   
+# problem avec stem_sent, divergence de la likelihood
+vocabulary,word2idx,idx2word = vocab_ids(sentences[0:900],13000)
+test = SkipGram(sentences[0:900],vocabulary,word2idx,idx2word,nEmbed = 100,negativeRate = 5)   
 vocabulary = test.vocabulary
 word2idx = test.word2idx
 idx2word = test.idx2word
 test_id_pairs = test.create_pairs_pos_neg()
 
 
-U,V,ll = test.train(n_iter = 20)
+U,V,ll = test.train(n_iter = 10)
 
 
-test.similarity('white','blue',U) ## mauvais 
-test.similarity('quickly','interest',U) ## car des mots choisis ne sont pas dans la word2idx
+test.similarity('boy','girl',U) ## mauvais 
+test.similarity('quickly','interest',U) ## car les mots choisis ne sont pas dans la word2idx
 test.save(PATH_TO_NLP,U,V)
 word, context = test.load(PATH_TO_NLP)
 
 
-
-
+#similarity matrix
+sim = np.zeros((test.voc_size,test.voc_size))
+for i in range(test.voc_size):
+    for j in range(test.voc_size):
+        sim[i][j] = test.similarity(test.vocabulary[i],test.vocabulary[j],U)
+    
+sim_df = pd.DataFrame(sim)
 
 if __name__ == '__main__':
 

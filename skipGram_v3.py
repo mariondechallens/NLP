@@ -12,11 +12,11 @@ import pandas as pd
 
 # useful stuff
 import numpy as np
-from scipy.special import expit
-from sklearn.preprocessing import normalize
+#from scipy.special import expit
+#from sklearn.preprocessing import normalize
 
 # ours 
-import re
+#import re
 from collections import Counter
 
 
@@ -55,7 +55,7 @@ sentences = text2sentences(filename)
 
 
 ###################Amelioration######################################
-from nltk.tokenize import word_tokenize
+#from nltk.tokenize import word_tokenize
 from nltk.stem.snowball import SnowballStemmer
 # instanciation du stemmer
 stemmer = SnowballStemmer('english')
