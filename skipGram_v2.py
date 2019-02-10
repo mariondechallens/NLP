@@ -337,6 +337,10 @@ for i in range(test.voc_size):
         sim[i][j] = test.similarity(test.vocabulary[i],test.vocabulary[j],U)
     
 sim_df = pd.DataFrame(sim)
+sim_df.index = test.vocabulary
+sim_df.columns = test.vocabulary
+sim_df.to_csv(PATH_TO_NLP +'similarity.csv',index=True)
+
 
 if __name__ == '__main__':
 
