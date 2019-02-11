@@ -74,7 +74,7 @@ def stem2(text) :
     for sentence in text:
         stem.append([stemmer.stem(word) for word in sentence])
     return stem
-    
+stem_sent2 = stem2(sentences)   
 
 def vocab_ids(sentences,n_most=13000):
     # Creat Tokens. We keep only tokens that is alphabic words
@@ -389,16 +389,17 @@ class SkipGram:
 
 # Test Code
 # probleme avec stem_sent, divergence de la likelihood
-vocabulary,word2idx,idx2word = vocab_ids(stem_sent[0:2000],13000)
-test = SkipGram(stem_sent[0:2000],vocabulary,word2idx,idx2word,nEmbed = 100,negativeRate = 5)   
+vocabulary,word2idx,idx2word = vocab_ids(stem_sent2[0:2000],13000)
+test = SkipGram(stem_sent2[0:2000],vocabulary,word2idx,idx2word,nEmbed = 100,negativeRate = 5)   
 
 test_id_pairs = test.create_pairs_pos_neg()
 
 
 U,V,ll = test.train(n_iter = 20, adam_opt= True,batch = False)
-## augmenter nombre d'iterations pour adam? 
+## augmenter nombre d'iterations pour adam? long
 ##mini-batch à revoir
-# probleme avec stem_sent, divergence de la likelihood ? pas la m^me structure!!
+# probleme avec stem_sent, divergence de la likelihood ? pas la même structure!!
+# enlever les the,a etc car trop courants ?
 
 test.similarity('boy','girl',U) ## mauvais 
 test.similarity('quickly','interest',U) ## car les mots choisis ne sont pas dans la word2idx
