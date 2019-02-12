@@ -392,13 +392,18 @@ class SkipGram:
 vocabulary,word2idx,idx2word = vocab_ids(stem_sent2[0:2000],13000)
 test = SkipGram(stem_sent2[0:2000],vocabulary,word2idx,idx2word,nEmbed = 100,negativeRate = 5)   
 
-test_id_pairs = test.create_pairs_pos_neg()
+test_id_pairs = test.create_pairs_pos_neg(proba = False)
 
 
-U,V,ll = test.train(n_iter = 20, adam_opt= True,batch = False)
-## augmenter nombre d'iterations pour adam? long
+U,V,ll = test.train(n_iter = 20, adam_opt= False,batch = True)
+U,V,ll1 = test.train(n_iter = 20, adam_opt= False,batch = False)
+U,V,ll2 = test.train(n_iter = 20, adam_opt= True,batch = False)
+U,V,ll3 = test.train(n_iter = 20, adam_opt= True,batch = True)
+
+
+## augmenter nombre d'iterations pour adam? long avec 3
+## param adam?
 ##mini-batch à revoir
-# probleme avec stem_sent, divergence de la likelihood ? pas la même structure!!
 # enlever les the,a etc car trop courants ?
 
 test.similarity('boy','girl',U) ## mauvais 
