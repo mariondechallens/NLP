@@ -412,13 +412,18 @@ U,V,ll = test.train(n_iter = 20, adam_opt= True,batch = True)
 test.save(PATH_TO_NLP,U,V)
 word, context = test.load(PATH_TO_NLP)
 
+
+#train file
+import gzip
+sent_train = []
+with gzip.open('C:/Users/Admin/Downloads/training-monolingual-news-commentary.gz','r') as fin:        
+    for line in fin:        
+       sent_train.append( line.lower().split() )
+
+sent_train_clean = cleaning(sent_train)
+
 #test file
-df_test = pd.read_csv(PATH_TO_NLP + 'test_file.csv')
-sim_skip = np.zeros(len(df_test))
-for i in range(len(df_test)):
-    sim_skip[i] = test.similarity(df_test['word1'][i],df_test['word2'][i],word)
-df_test['skip_sim'] = sim_skip
-df_test.to_csv(PATH_TO_NLP + 'test_skip_sim.csv')
+test.similarity_file('test_file.csv',PATH_TO_NLP,word)
 
 
 
