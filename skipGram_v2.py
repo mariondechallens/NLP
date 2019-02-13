@@ -74,7 +74,7 @@ def stem2(text) :
     for sentence in text:
         stem.append([stemmer.stem(word) for word in sentence])
     return stem
-stem_sent2 = stem2(sentences)   
+#stem_sent2 = stem2(sentences)   
 
 def vocab_ids(sentences,n_most=13000):
     # Creat Tokens. We keep only tokens that is alphabic words
@@ -102,6 +102,7 @@ def probability(sentences):
     prob_neg = [p**(3/4)/ sum(prob**(3/4)) for p in prob]
     return  prob_neg, select_word
 
+'''
 def sim_matrix(n,voc,path):
 #similarity matrix
     sim = np.zeros((n,n))
@@ -113,7 +114,7 @@ def sim_matrix(n,voc,path):
     sim_df.index = voc
     sim_df.columns = voc
     sim_df.to_csv(path +'similarity.csv',index=True)
-    return sim_df
+    return sim_df '''
 
 def sigmoid(x):  
     return 1 / (1 + np.exp(-x))
@@ -200,11 +201,12 @@ class SkipGram:
     ########################################################################################################
     ## generating vocabulary and ids from observed data(most frequent words)
 
-    def create_pairs_pos_neg(self,proba = True): #cooccurence matrix
+    def create_pairs_pos_neg(self,proba = True,stem = False): #cooccurence matrix
         # generating words vector for words as words (center) and words as context
         window_size = self.winSize  #context windows - exploration around the center word
         # word2idx = self.word2idx
-        
+        if stem == True :
+            self.sentences = stem2(self.sentences)
         for sentence in self.sentences:
             if proba == True :
                 prob_neg, neg_word = probability(self.sentences)
@@ -347,19 +349,25 @@ class SkipGram:
         
         return U,V,ll
     
-    def similarity(self,word1,word2,U): # similar if we can replace the word1 by the word2, they appear in the same context
+    def similarity(self,word1,word2,word_emb): # similar if we can replace the word1 by the word2, they appear in the same context
         if word1 not in self.word2idx.keys() or word2 not in self.word2idx.keys():
-            print('At least one of the words is not in the vocabulary')
+            #print('At least one of the words is not in the vocabulary')
             s = -10
         else:
-            id1 = self.word2idx[word1]
-            id2 = self.word2idx[word2]
-            u = U[id1,:]
-            v = U[id2,:]
+            u = np.array(word_emb.loc[word1])
+            v = np.array(word_emb.loc[word2])
             s = round(np.dot(u,v)/(np.linalg.norm(u)*np.linalg.norm(v)),3) #cosine 
         return s
 
-    
+    def similarity_file(self,test_file,path,word_emb):
+        df_test = pd.read_csv(path + test_file)
+        sim_skip = np.zeros(len(df_test))
+        for i in range(len(df_test)):
+            sim_skip[i] = self.similarity(df_test['word1'][i],df_test['word2'][i],word_emb)
+        df_test['skip_sim'] = sim_skip
+        df_test.to_csv(path + 'test_skip_sim.csv')
+        
+        
 
     def save(self,path,U,V):
         voc = pd.DataFrame(self.vocabulary,columns=['vocab'])
@@ -389,30 +397,30 @@ class SkipGram:
 
 # Test Code
 # probleme avec stem_sent, divergence de la likelihood
-vocabulary,word2idx,idx2word = vocab_ids(stem_sent2[0:2000],13000)
-test = SkipGram(stem_sent2[0:2000],vocabulary,word2idx,idx2word,nEmbed = 100,negativeRate = 5)   
+vocabulary,word2idx,idx2word = vocab_ids(sentences[0:5000],13000)
+test = SkipGram(sentences[0:5000],vocabulary,word2idx,idx2word,nEmbed = 100,negativeRate = 5)   
 
-test_id_pairs = test.create_pairs_pos_neg(proba = False)
-
-
-U,V,ll = test.train(n_iter = 20, adam_opt= False,batch = True)
-U,V,ll1 = test.train(n_iter = 20, adam_opt= False,batch = False)
-U,V,ll2 = test.train(n_iter = 20, adam_opt= True,batch = False)
-U,V,ll3 = test.train(n_iter = 20, adam_opt= True,batch = True)
+#creation of the coocurrence matrix before the training !!
+test_id_pairs = test.create_pairs_pos_neg()
 
 
-## augmenter nombre d'iterations pour adam? long avec 3
-## param adam?
-##mini-batch à revoir
-# enlever les the,a etc car trop courants ?
+U,V,ll = test.train(n_iter = 20, adam_opt= True,batch = True)
+#U,V,ll1 = test.train(n_iter = 20, adam_opt= False,batch = False)
+#U,V,ll2 = test.train(n_iter = 20, adam_opt= True,batch = False)
+#U,V,ll3 = test.train(n_iter = 20, adam_opt= True,batch = True)
 
-test.similarity('boy','girl',U) ## mauvais 
-test.similarity('quickly','interest',U) ## car les mots choisis ne sont pas dans la word2idx
 test.save(PATH_TO_NLP,U,V)
 word, context = test.load(PATH_TO_NLP)
 
+#test file
+df_test = pd.read_csv(PATH_TO_NLP + 'test_file.csv')
+sim_skip = np.zeros(len(df_test))
+for i in range(len(df_test)):
+    sim_skip[i] = test.similarity(df_test['word1'][i],df_test['word2'][i],word)
+df_test['skip_sim'] = sim_skip
+df_test.to_csv(PATH_TO_NLP + 'test_skip_sim.csv')
 
-#sim_df = sim_matrix(test.voc_size,test.vocabulary,PATH_TO_NLP)
+
 
 
 
