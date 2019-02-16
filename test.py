@@ -251,7 +251,7 @@ class SkipGram:
     # Skip-Gram Negative Samples
     ########################################################################################################
     #  building center word and context word vectors by one hot encoding
-    def train(self, n_iter = 20,lr = 0.002,batch_size = 20):
+    def train(self, n_iter = 20,lr = 0.002,batch_size = 20,adam_opt = False,batch=False):
 
     # We initiate our embedding by using normal multivariate distribution
         U = np.random.randn(self.voc_size,self.nEmbed)
@@ -261,7 +261,7 @@ class SkipGram:
         print("initial likelihood",ll)
         n_obs = self.idx_pairs.shape[0]
         
-        '''if adam_opt == False and batch == True :
+        if adam_opt == False and batch == True :
             print('Performing Gradient Descent with mini-batches')
             for iteration in range(n_iter):
                 np.random.shuffle(self.idx_pairs)
@@ -284,34 +284,34 @@ class SkipGram:
                 
                 ll = log_Likelihood(self.idx_pairs,U,V)
                 if iteration%1 == 0:
-                    print("likelihood at step ",int(iteration + 1)," : ",ll)'''
+                    print("likelihood at step ",int(iteration + 1)," : ",ll)
         
 
-        #if adam_opt == False and batch == False : 
-        print('Performing Gradient Descent without mini-batches')
-        for iteration in range(n_iter):
-            np.random.shuffle(self.idx_pairs)
-            for id_obs in range(n_obs):
-
-                i,j,d = self.idx_pairs[id_obs,:]
-           
-                u = U[i,:]
-                v = V[j,:]
-        
-                x = np.dot(u,v)
-
-                grad_u_i = sigmoid(-d * x) * v * d
-                U[i,:] = U[i,:] + lr * grad_u_i
-        
-                grad_v_j = sigmoid(-d * x) * u * d       
-                V[j,:] = V[j,:] + lr * grad_v_j
-                
-            ll = log_Likelihood(self.idx_pairs,U,V)
-            if iteration%1 == 0:
-                print("likelihood at step ",int(iteration + 1)," : ",ll)
+        if adam_opt == False and batch == False : 
+            print('Performing Gradient Descent without mini-batches')
+            for iteration in range(n_iter):
+                np.random.shuffle(self.idx_pairs)
+                for id_obs in range(n_obs):
+    
+                    i,j,d = self.idx_pairs[id_obs,:]
+               
+                    u = U[i,:]
+                    v = V[j,:]
+            
+                    x = np.dot(u,v)
+    
+                    grad_u_i = sigmoid(-d * x) * v * d
+                    U[i,:] = U[i,:] + lr * grad_u_i
+            
+                    grad_v_j = sigmoid(-d * x) * u * d       
+                    V[j,:] = V[j,:] + lr * grad_v_j
+                    
+                ll = log_Likelihood(self.idx_pairs,U,V)
+                if iteration%1 == 0:
+                    print("likelihood at step ",int(iteration + 1)," : ",ll)
         
                     
-        '''if adam_opt == True and batch == False :
+        if adam_opt == True and batch == False :
             print('Performing Adam optimization without mini-batches')
             for iteration in range(n_iter):
                 np.random.shuffle(self.idx_pairs)
@@ -352,7 +352,7 @@ class SkipGram:
                     
                 ll = log_Likelihood(self.idx_pairs,U,V)
                 if iteration%1 == 0:
-                    print("likelihood at step ",int(iteration + 1)," : ",ll)'''
+                    print("likelihood at step ",int(iteration + 1)," : ",ll)
         
         return U,V,ll
     
@@ -421,7 +421,7 @@ sentences = sent_train_clean[0:100]
 
 
 model = SkipGram(sentences)   
-U,V,ll = model.train()
+U,V,ll = model.train(n_iter = 20,adam_opt = False,batch=False)
 
 model.save(PATH_TO_NLP,U,V)
 word, context = model.load(PATH_TO_NLP)
@@ -441,7 +441,7 @@ if __name__ == '__main__':
     if not opts.test:
         sentences = text2sentences(opts.text)
         sg = SkipGram(sentences)
-        sg.train()
+        sg.train(n_iter = 20,adam_opt = False,batch=False)
         sg.save(opts.model)
 
     else:
