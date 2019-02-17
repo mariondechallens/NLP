@@ -9,8 +9,7 @@ Created on Sun Feb  3 16:28:38 2019
 from __future__ import division
 import argparse
 import pandas as pd
-
-# useful stuff
+import pickle # for saving and loading models
 import numpy as np
 
 from collections import Counter
@@ -226,6 +225,10 @@ class SkipGram:
         self.idx_pairs = id_pairs
         self.sentences = sentences 
         self.voc_size = len(vocabulary)
+            # We initiate our embedding by using normal multivariate distribution
+        self.U = np.random.randn(self.voc_size,self.nEmbed) #embeddings for center words
+        self.V = np.random.randn(self.voc_size,self.nEmbed) #embeddings for context words 
+        self.ll = 0
 
         #Setting as research paper: proba = true, stem = false
         # arguments of create_pairs_pos_neg(sentences,word2idx,vocabulary, window_size = 2, negativeRate=5, proba = True,stem = False)
@@ -237,11 +240,8 @@ class SkipGram:
     #  building center word and context word vectors by one hot encoding
     def train(self, n_iter = 20,lr = 0.002,batch_size = 20,adam_opt = False,batch=False, print_lik = False):
 
-    # We initiate our embedding by using normal multivariate distribution
-        U = np.random.randn(self.voc_size,self.nEmbed)
-        V = np.random.randn(self.voc_size,self.nEmbed)
     
-        ll = log_Likelihood(self.idx_pairs,U,V)
+        self.ll = log_Likelihood(self.idx_pairs,self.U,self.V)
         print("initial likelihood",ll)
         n_obs = self.idx_pairs.shape[0]
         
@@ -257,19 +257,19 @@ class SkipGram:
                     indice_j  = [batch_[i,1] for i in range(batch_size)]
                     indice_d  = [batch_[i,2] for i in range(batch_size)]
                     
-                    u = U[indice_i,:]
-                    v = V[indice_j,:]  
+                    u = self.U[indice_i,:]
+                    v = self.V[indice_j,:]  
                     
                     grad_u_m = np.mean(np.array([sigmoid(-indice_d[l] * np.dot(u[l],v[l])) * v[l] * indice_d[l] for l in range(batch_size)]),axis = 0)
-                    U[indice_i,:] = U[indice_i,:] + lr * grad_u_m
+                    self.U[indice_i,:] = self.U[indice_i,:] + lr * grad_u_m
                     
                     grad_v_m = np.mean(np.array([sigmoid(-indice_d[l] * np.dot(u[l],v[l])) * u[l] * indice_d[l] for l in range(batch_size)]),axis = 0)
-                    V[indice_j,:] = V[indice_j,:] + lr * grad_v_m
+                    self.V[indice_j,:] = self.V[indice_j,:] + lr * grad_v_m
                 
-                ll = log_Likelihood(self.idx_pairs,U,V)
+                self.ll = log_Likelihood(self.idx_pairs,self.U,self.V)
                 if print_lik == True:
                     if iteration%1 == 0:
-                        print("likelihood at step ",int(iteration + 1)," : ",ll)
+                        print("likelihood at step ",int(iteration + 1)," : ",self.ll)
         
 
         if adam_opt == False and batch == False : 
@@ -280,21 +280,21 @@ class SkipGram:
     
                     i,j,d = self.idx_pairs[id_obs,:]
                
-                    u = U[i,:]
-                    v = V[j,:]
+                    u = self.U[i,:]
+                    v = self.V[j,:]
             
                     x = np.dot(u,v)
     
                     grad_u_i = sigmoid(-d * x) * v * d
-                    U[i,:] = U[i,:] + lr * grad_u_i
+                    self.U[i,:] = self.U[i,:] + lr * grad_u_i
             
                     grad_v_j = sigmoid(-d * x) * u * d       
-                    V[j,:] = V[j,:] + lr * grad_v_j
+                    self.V[j,:] = self.V[j,:] + lr * grad_v_j
                     
-                ll = log_Likelihood(self.idx_pairs,U,V)
+                self.ll = log_Likelihood(self.idx_pairs,self.U,self.V)
                 if print_lik == True:
                     if iteration%1 == 0:
-                        print("likelihood at step ",int(iteration + 1)," : ",ll)
+                        print("likelihood at step ",int(iteration + 1)," : ",self.ll)
          
                     
         if adam_opt == True and batch == False :
@@ -305,16 +305,16 @@ class SkipGram:
 
                     i,j,d = self.idx_pairs[id_obs,:]
                
-                    u = U[i,:]
-                    v = V[j,:]
+                    u = self.U[i,:]
+                    v = self.V[j,:]
             
                     x = np.dot(u,v)
-                    U[i,:], V[j,:] = adam(self.nEmbed,d,u,v,x)
+                    self.U[i,:],self.V[j,:] = adam(self.nEmbed,d,u,v,x)
                 
-                ll = log_Likelihood(self.idx_pairs,U,V)
+                self.ll = log_Likelihood(self.idx_pairs,self.U,self.V)
                 if print_lik == True:
                     if iteration%1 == 0:
-                        print("likelihood at step ",int(iteration + 1)," : ",ll)
+                        print("likelihood at step ",int(iteration + 1)," : ",self.ll)
          
             
         if adam_opt == True and batch == True :
@@ -329,65 +329,50 @@ class SkipGram:
                     indice_j  = [batch_[i,1] for i in range(batch_size)]
                     indice_d  = [batch_[i,2] for i in range(batch_size)]
                     
-                    u = U[indice_i,:]
-                    v = V[indice_j,:]
+                    u = self.U[indice_i,:]
+                    v = self.V[indice_j,:]
                     
-                    U[indice_i,:],V[indice_j,:] = adam_batch(self.nEmbed,indice_d,u,v,batch_size)
+                    self.U[indice_i,:],self.V[indice_j,:] = adam_batch(self.nEmbed,indice_d,u,v,batch_size)
                     
                     
 
                     
-                ll = log_Likelihood(self.idx_pairs,U,V)
+                self.ll = log_Likelihood(self.idx_pairs,self.U,self.V)
                 if print_lik == True:
                     if iteration%1 == 0:
-                        print("likelihood at step ",int(iteration + 1)," : ",ll)
+                        print("likelihood at step ",int(iteration + 1)," : ",self.ll)
          
-        return U,V,ll
     
-    def similarity(self,word1,word2,word_emb): # similar if we can replace the word1 by the word2, they appear in the same context
+    def similarity(self,word1,word2): # similar if we can replace the word1 by the word2, they appear in the same context
         if word1 not in self.word2idx.keys() or word2 not in self.word2idx.keys():
             #print('At least one of the words is not in the vocabulary')
             s = -10
         else:
-            u = np.array(word_emb.loc[word1])
-            v = np.array(word_emb.loc[word2])
+            u = np.array(self.U[self.word2idx[word1]])
+            v = np.array(self.U[self.word2idx[word2]])
             s = round(np.dot(u,v)/(np.linalg.norm(u)*np.linalg.norm(v)),3) #cosine 
         return s
 
-    def similarity_file(self,test_file,path,word_emb):
+    def similarity_file(self,test_file,path):
         df_test = pd.read_csv(path + test_file)
         sim_skip = np.zeros(len(df_test))
         for i in range(len(df_test)):
-            sim_skip[i] = self.similarity(df_test['word1'][i],df_test['word2'][i],word_emb)
+            sim_skip[i] = self.similarity(df_test['word1'][i],df_test['word2'][i])
         df_test['skip_sim'] = sim_skip
         df_test.to_csv(path + 'test_skip_sim.csv')
         
         
 
-    def save(self,path,U,V):
-        voc = pd.DataFrame(self.vocabulary,columns=['vocab'])
-        # center words matrix
-        emb_w = pd.DataFrame(U)
-        emb_w = pd.concat([voc, emb_w], axis=1, sort=False)
-        emb_w = emb_w.set_index('vocab')
-        emb_w.to_csv(path +'emb_word.csv',index=True)
-        
-        #context words matrix
-        emb_c = pd.DataFrame(V)
-        emb_c = pd.concat([voc, emb_c], axis=1, sort=False)
-        emb_c = emb_c.set_index('vocab')
-        emb_c.to_csv(path +'emb_context.csv',index=True)
-        
-        
-        
-    
+    def save(self,path):
+        with open(path, 'wb') as file:  
+            pickle.dump(self, file)
+   
     @staticmethod
     def load(path):
-        emb_word = pd.read_csv(path + 'emb_word.csv').set_index('vocab')
-        emb_cont = pd.read_csv(path + 'emb_context.csv').set_index('vocab')
-        return emb_word, emb_cont
+        with open(path, 'rb') as file:  
+            pickle_model = pickle.load(file)
+        return pickle_model
         
-
 
 
 
@@ -404,19 +389,19 @@ class SkipGram:
 
 
 ####Execution
-sent_train_clean = cleaning(sent_train)
-sentences = sent_train_clean[0:5000]
+sentences = sent_train[1000:1100]
+sentences = cleaning(sentences)
 
 
 model = SkipGram(sentences)   
-U,V,ll = model.train(print_lik= True) #n_iter = 20, adam = false and batch = false by default
+model.train(print_lik= True) #n_iter = 20, adam = false and batch = false by default
 
-model.save(PATH_TO_NLP,U,V)
-word, context = model.load(PATH_TO_NLP)
+model.save(PATH_TO_NLP + 'sg.pkl')
+sg = model.load(PATH_TO_NLP + 'sg.pkl')
 
 #test file
-model.similarity_file('test_file.csv',PATH_TO_NLP,word)
-print(model.similarity('boy','girl',word))
+model.similarity_file('test_file.csv',PATH_TO_NLP)
+print(model.similarity('as','a'))
 
 
 if __name__ == '__main__':
@@ -432,7 +417,7 @@ if __name__ == '__main__':
     if not opts.test:
         sentences = text2sentences(opts.text)
         sg = SkipGram(sentences)
-        sg.train(n_iter = 20,adam_opt = False,batch=False)
+        sg.train()
         sg.save(opts.model)
 
     else:
