@@ -235,7 +235,7 @@ class SkipGram:
     # Skip-Gram Negative Samples
     ########################################################################################################
     #  building center word and context word vectors by one hot encoding
-    def train(self, n_iter = 20,lr = 0.002,batch_size = 20,adam_opt = False,batch=False):
+    def train(self, n_iter = 20,lr = 0.002,batch_size = 20,adam_opt = False,batch=False, print_lik = False):
 
     # We initiate our embedding by using normal multivariate distribution
         U = np.random.randn(self.voc_size,self.nEmbed)
@@ -267,8 +267,9 @@ class SkipGram:
                     V[indice_j,:] = V[indice_j,:] + lr * grad_v_m
                 
                 ll = log_Likelihood(self.idx_pairs,U,V)
-                if iteration%1 == 0:
-                    print("likelihood at step ",int(iteration + 1)," : ",ll)
+                if print_lik == True:
+                    if iteration%1 == 0:
+                        print("likelihood at step ",int(iteration + 1)," : ",ll)
         
 
         if adam_opt == False and batch == False : 
@@ -291,9 +292,10 @@ class SkipGram:
                     V[j,:] = V[j,:] + lr * grad_v_j
                     
                 ll = log_Likelihood(self.idx_pairs,U,V)
-                if iteration%1 == 0:
-                    print("likelihood at step ",int(iteration + 1)," : ",ll)
-        
+                if print_lik == True:
+                    if iteration%1 == 0:
+                        print("likelihood at step ",int(iteration + 1)," : ",ll)
+         
                     
         if adam_opt == True and batch == False :
             print('Performing Adam optimization without mini-batches')
@@ -310,9 +312,10 @@ class SkipGram:
                     U[i,:], V[j,:] = adam(self.nEmbed,d,u,v,x)
                 
                 ll = log_Likelihood(self.idx_pairs,U,V)
-                if iteration%1 == 0:
-                    print("likelihood at step ",int(iteration + 1)," : ",ll)
-        
+                if print_lik == True:
+                    if iteration%1 == 0:
+                        print("likelihood at step ",int(iteration + 1)," : ",ll)
+         
             
         if adam_opt == True and batch == True :
             print('Performing Adam optimization with mini-batches')
@@ -335,9 +338,10 @@ class SkipGram:
 
                     
                 ll = log_Likelihood(self.idx_pairs,U,V)
-                if iteration%1 == 0:
-                    print("likelihood at step ",int(iteration + 1)," : ",ll)
-        
+                if print_lik == True:
+                    if iteration%1 == 0:
+                        print("likelihood at step ",int(iteration + 1)," : ",ll)
+         
         return U,V,ll
     
     def similarity(self,word1,word2,word_emb): # similar if we can replace the word1 by the word2, they appear in the same context
@@ -401,15 +405,18 @@ class SkipGram:
 
 ####Execution
 sent_train_clean = cleaning(sent_train)
-sentences = sent_train_clean[0:1000]
+sentences = sent_train_clean[0:5000]
 
 
 model = SkipGram(sentences)   
-U,V,ll = model.train(n_iter = 20) #adam = false and batch = false by default
+U,V,ll = model.train(print_lik= True) #n_iter = 20, adam = false and batch = false by default
 
 model.save(PATH_TO_NLP,U,V)
 word, context = model.load(PATH_TO_NLP)
 
+#test file
+model.similarity_file('test_file.csv',PATH_TO_NLP,word)
+print(model.similarity('boy','girl',word))
 
 
 if __name__ == '__main__':
