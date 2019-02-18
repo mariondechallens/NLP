@@ -242,7 +242,7 @@ class SkipGram:
 
     
         self.ll = log_Likelihood(self.idx_pairs,self.U,self.V)
-        print("initial likelihood",ll)
+        print("initial likelihood",self.ll)
         n_obs = self.idx_pairs.shape[0]
         
         if adam_opt == False and batch == True :
@@ -389,7 +389,7 @@ class SkipGram:
 
 
 ####Execution
-sentences = sent_train[1000:1100]
+sentences = sent_train[1000:3000]
 sentences = cleaning(sentences)
 
 
@@ -401,7 +401,7 @@ sg = model.load(PATH_TO_NLP + 'sg.pkl')
 
 #test file
 model.similarity_file('test_file.csv',PATH_TO_NLP)
-print(model.similarity('as','a'))
+print(model.similarity('boy','the'))
 
 
 if __name__ == '__main__':
