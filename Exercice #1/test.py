@@ -373,23 +373,9 @@ class SkipGram:
             pickle_model = pickle.load(file)
         return pickle_model
         
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+'''
 ####Execution
-sentences = sent_train[1000:3000]
+sentences = sent_train[100:300]
 sentences = cleaning(sentences)
 
 
@@ -402,7 +388,7 @@ sg = model.load(PATH_TO_NLP + 'sg.pkl')
 #test file
 model.similarity_file('test_file.csv',PATH_TO_NLP)
 print(model.similarity('boy','the'))
-
+'''
 
 if __name__ == '__main__':
 
