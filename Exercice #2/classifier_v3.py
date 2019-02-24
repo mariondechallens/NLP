@@ -85,5 +85,6 @@ dev = clean_data(pd.read_csv(PATH_TO_DATA + 'devdata.csv',sep='\t',header=None))
 
 sum(pred==dev['sentiment'])/len(pred) """
 
-#améliorations : ajouter des couches de convolution2D?
+# Améliorations : ajouter des couches de convolution2D?
+# enlever aspect term et category qu'on n'utilise pas ?
 # source : https://remicnrd.github.io/Aspect-based-sentiment-analysis/
