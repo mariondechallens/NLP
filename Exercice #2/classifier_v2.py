@@ -2,6 +2,8 @@
 import os
 #PATH_TO_DATA = "C:/Users/Sophie HU/Desktop/CentraleSupelec/NLP/HW2/exercise2/data"
 PATH_TO_DATA ="C:\\Users\\Sophie HU\\Desktop\\CentraleSupelec\\NLP\\HW2\\exercise2\\data"
+#PATH_TO_DATA = "C:/Users/Admin/Documents/Centrale Paris/3A/OMA/NLP/Exo 2/exercise2/exercise2/data/"
+
 dev_data = os.path.join(PATH_TO_DATA, 'devdata.csv')
 train_data = os.path.join(PATH_TO_DATA, 'traindata.csv')
 
@@ -11,6 +13,8 @@ import spacy
 #conda install -c conda-forge spacy
 # python -m spacy download en
 nlp = spacy.load('en')
+#nlp = spacy.load('C:/Users/Admin/Anaconda3/envs/py35/lib/site-packages/en_core_web_sm/en_core_web_sm-2.0.0')
+
 
 from keras.models import load_model
 from keras.models import Sequential
