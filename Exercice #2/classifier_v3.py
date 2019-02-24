@@ -20,14 +20,14 @@ PATH_TO_DATA = "C:/Users/Admin/Documents/Centrale Paris/3A/OMA/NLP/Exo 2/exercis
 # from the review, extracting the sentiment terms with the library spacy
 def clean_data(data):
     data = data.loc[:, [0, 4]]
-    data = data.rename(index=str, columns={ 0: "sentiment", 4: "review"})
-    sentiment_terms = []
-    for review in nlp.pipe(data['review']):
-        if review.is_parsed:
-            sentiment_terms.append(' '.join([token.lemma_ for token in review if (not token.is_stop and not token.is_punct and (token.pos_ == "ADJ" or token.pos_ == "VERB"))]))
+    data = data.rename(index=str, columns={ 0: "opinion", 4: "sentence"})
+    opinion_words = []
+    for sent in nlp.pipe(data['sentence']):
+        if sent.is_parsed:
+            opinion_words.append(' '.join([token.lemma_ for token in sent if (not token.is_stop and not token.is_punct and (token.pos_ == "ADJ" or token.pos_ == "VERB"))]))
         else:
-            sentiment_terms.append('')  
-    data['sentiment_terms'] = sentiment_terms
+            opinion_words.append('')  
+    data['opinion_words'] = opinion_words
 
     return data
 
@@ -40,35 +40,37 @@ class Classifier:
     def __init__(self,vocab_size = 6000,epoch = 5):  
         
         self.vocab_size=vocab_size
+        '''
         #With convolutional layers
-        sentiment_model = Sequential()
-        sentiment_model.add(Embedding(self.vocab_size, self.vocab_size, input_length=self.vocab_size))
-        sentiment_model.add(Convolution1D(64, 3, padding='same'))
-        sentiment_model.add(Convolution1D(32, 3, padding='same'))
-        sentiment_model.add(Convolution1D(16, 3, padding='same'))
-        sentiment_model.add(Flatten())
-        sentiment_model.add(Dropout(0.2))
-        sentiment_model.add(Dense(180,activation='sigmoid'))
-        sentiment_model.add(Dropout(0.2))
-        sentiment_model.add(Dense(3,activation='sigmoid'))
-        sentiment_model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+        model = Sequential()
+        model.add(Embedding(self.vocab_size, self.vocab_size, input_length=self.vocab_size))
+        model.add(Convolution1D(64, 3, padding='same'))
+        model.add(Convolution1D(32, 3, padding='same'))
+        model.add(Convolution1D(16, 3, padding='same'))
+        model.add(Flatten())
+        model.add(Dropout(0.2))
+        model.add(Dense(180,activation='sigmoid'))
+        model.add(Dropout(0.2))
+        model.add(Dense(3,activation='sigmoid'))
+        model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+        '''
         '''
         #With LSTM
-        sentiment_model = Sequential()
-        sentiment_model.add(Embedding(self.vocab_size, 128))
-        sentiment_model.add(LSTM(128,dropout=0.2, recurrent_dropout=0.2)) 
-        sentiment_model.add(Dense(3))
-        sentiment_model.add(Activation('sigmoid'))
-        sentiment_model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+        model = Sequential()
+        model.add(Embedding(self.vocab_size, 128))
+        model.add(LSTM(128,dropout=0.2, recurrent_dropout=0.2)) 
+        model.add(Dense(3))
+        model.add(Activation('sigmoid'))
+        model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
         ''' 
-        '''
+        
         # Simply with Dense
-        sentiment_model = Sequential()
-        sentiment_model.add(Dense(512, input_shape=(self.vocab_size,), activation='relu'))
-        sentiment_model.add(Dense(3, activation='softmax'))
-        sentiment_model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
-        '''
-        self.model = sentiment_model
+        model = Sequential()
+        model.add(Dense(512, input_shape=(self.vocab_size,), activation='relu'))
+        model.add(Dense(3, activation='softmax'))
+        model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+        
+        self.model = model
         self.tokenizer = Tokenizer(num_words=self.vocab_size)
         self.label_encoder = LabelEncoder()
         self.epoch = epoch
@@ -80,16 +82,16 @@ class Classifier:
         train_data = clean_data(pd.read_csv(trainfile,sep='\t',header = None))
         
         #tokenization from keras according to Bag of Words embeddings techniques
-        self.tokenizer.fit_on_texts(train_data.review)
-        sentiment_tokenized = pd.DataFrame(self.tokenizer.texts_to_matrix(train_data.sentiment_terms))
+        self.tokenizer.fit_on_texts(train_data.sentence)
+        opinion_embedding = pd.DataFrame(self.tokenizer.texts_to_matrix(train_data.opinion_words))
         
         #creating labels with keras
-        integer_sentiment =self.label_encoder.fit_transform(train_data.sentiment)
-        cat_sentiment = to_categorical(integer_sentiment)
+        opinion_label =self.label_encoder.fit_transform(train_data.opinion)
+        opinion_cate = to_categorical(opinion_label)
 
 
-        #self.model.fit(sentiment_tokenized, cat_sentiment, epochs=self.epoch, verbose=1)
-        self.model.fit(sentiment_tokenized, cat_sentiment, batch_size=50, epochs=self.epoch)
+        self.model.fit(opinion_embedding, opinion_cate, epochs=self.epoch, verbose=1)
+
 
 
     def predict(self, datafile):
@@ -98,27 +100,28 @@ class Classifier:
         """
         dev_data = clean_data(pd.read_csv(datafile,sep='\t',header = None))
         
-        sentiment_tokenized = pd.DataFrame(self.tokenizer.texts_to_matrix(dev_data.sentiment_terms))
-        predicted_sentiment = self.label_encoder.inverse_transform(self.model.predict_classes(sentiment_tokenized)) 
+        opinion_embedding = pd.DataFrame(self.tokenizer.texts_to_matrix(dev_data.opinion_words))
+        predicted_opinion = self.label_encoder.inverse_transform(self.model.predict_classes(opinion_embedding)) 
         
-        return predicted_sentiment
+        return predicted_opinion
 
-
-classif = Classifier(vocab_size=1000)
+'''
+classif = Classifier(vocab_size=6000)
 classif.train(PATH_TO_DATA + 'traindata.csv')
 pred = classif.predict(PATH_TO_DATA + 'devdata.csv')
 
 dev = clean_data(pd.read_csv(PATH_TO_DATA + 'devdata.csv',sep='\t',header=None))
 
-sum(pred==dev['sentiment'])/len(pred)
-
+s = sum(pred==dev['opinion'])/len(pred)
+'''
 # Améliorations : 
 # Dense : accu de 0.77, très rapide avec 6000
 #LSTM : long avec 300 voc, accu de 0.70, augmenter la taille des batchs ? sans batchs?
 # 6000 bcp trop long
 #Conv 1D : 600, rapide, 0.70
-#6000 : pb de mémoire
+#6000 : pb de mémoire, trop gros vecteurs
 #1000, assez rapide, 0.70
+#3000 : sans batchs
 # source : https://remicnrd.github.io/Aspect-based-sentiment-analysis/
 # https://medium.com/@thoszymkowiak/how-to-implement-sentiment-analysis-using-word-embedding-and-convolutional-neural-networks-on-keras-163197aef623
 # ils disent 20 minutes pour 86% sur le site
