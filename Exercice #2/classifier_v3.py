@@ -14,8 +14,10 @@ PATH_TO_DATA = "C:/Users/Admin/Documents/Centrale Paris/3A/OMA/NLP/Exo 2/exercis
 #dev = pd.read_csv(PATH_TO_DATA + 'devdata.csv',sep='\t',header=None)
 #train = pd.read_csv(PATH_TO_DATA + 'traindata.csv',sep='\t',header = None)
 
+#preprocessing of data : extracting the sentiment, the category, the review, the aspect_term
+# from the review, extracting the sentiment terms with the library spacy
 def clean_data(data):
-    data = data.loc[:, [0, 1, 4,2]]
+    data = data.loc[:, [0, 1, 4, 2]]
     data = data.rename(index=str, columns={ 0: "sentiment", 1: "aspect_category", 4: "review", 2: "aspect_term"})
     sentiment_terms = []
     for review in nlp.pipe(data['review']):
@@ -33,7 +35,8 @@ def clean_data(data):
     
 class Classifier:
     """The Classifier"""
-    def __init__(self,vocab_size = 6000,epoch = 5):  #60000?  
+    def __init__(self,vocab_size = 6000,epoch = 7):  #60000?  
+        
         self.vocab_size=vocab_size# randomly set a maximum size for the vocabulary
         sentiment_model = Sequential()
         sentiment_model.add(Dense(512, input_shape=(self.vocab_size,), activation='relu'))
@@ -43,17 +46,18 @@ class Classifier:
         self.tokenizer = Tokenizer(num_words=self.vocab_size)
         self.label_encoder = LabelEncoder()
         self.epoch = epoch
+        
     #############################################
     def train(self, trainfile):
         """Trains the classifier model on the training set stored in file trainfile"""
         #preprocessing data
         train_data = clean_data(pd.read_csv(trainfile,sep='\t',header = None))
         
-        #tokenization
+        #tokenization from keras according to Bag of Words embeddings techniques
         self.tokenizer.fit_on_texts(train_data.review)
         sentiment_tokenized = pd.DataFrame(self.tokenizer.texts_to_matrix(train_data.sentiment_terms))
         
-        #labels
+        #creating labels with keras
         integer_sentiment =self.label_encoder.fit_transform(train_data.sentiment)
         cat_sentiment = to_categorical(integer_sentiment)
 
