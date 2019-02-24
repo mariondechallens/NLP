@@ -72,13 +72,14 @@ class Classifier:
         
         return predicted_sentiment
 
-
+"""
 classif = Classifier()
 classif.train(PATH_TO_DATA + 'traindata.csv')
 pred = classif.predict(PATH_TO_DATA + 'devdata.csv')
 
 dev = clean_data(pd.read_csv(PATH_TO_DATA + 'devdata.csv',sep='\t',header=None))
 
-sum(pred==dev['sentiment'])/len(pred)
+sum(pred==dev['sentiment'])/len(pred) """
 
 #améliorations : ajouter des couches de convolution2D?
+# source : https://remicnrd.github.io/Aspect-based-sentiment-analysis/

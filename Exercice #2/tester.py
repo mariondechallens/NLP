@@ -1,7 +1,8 @@
 import time
 import numpy as np
 
-from classifier import Classifier
+#from classifier import Classifier
+from classifier_v3 import Classifier
 from eval import eval_file, eval_list, load_label_output
 
 def set_reproductible():
@@ -19,7 +20,8 @@ def set_reproductible():
 
 if __name__ == "__main__":
     set_reproductible()
-    datadir = "../data/"
+    datadir = "C:/Users/Admin/Documents/Centrale Paris/3A/OMA/NLP/Exo 2/exercise2/exercise2/data/"
+#datadir = "../data/"
     trainfile =  datadir + "traindata.csv"
     devfile =  datadir + "devdata.csv"
     testfile =  None
