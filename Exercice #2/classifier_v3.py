@@ -2,7 +2,9 @@
 import pandas as pd
 import spacy
 from keras.models import Sequential
-from keras.layers import Dense
+from keras.layers import Dense, Dropout, Activation, LSTM, Flatten, Convolution1D
+
+from keras.layers.embeddings import Embedding
 from keras.preprocessing.text import Tokenizer
 from sklearn.preprocessing import LabelEncoder
 from keras.utils import to_categorical
@@ -17,8 +19,8 @@ PATH_TO_DATA = "C:/Users/Admin/Documents/Centrale Paris/3A/OMA/NLP/Exo 2/exercis
 #preprocessing of data : extracting the sentiment, the category, the review, the aspect_term
 # from the review, extracting the sentiment terms with the library spacy
 def clean_data(data):
-    data = data.loc[:, [0, 1, 4, 2]]
-    data = data.rename(index=str, columns={ 0: "sentiment", 1: "aspect_category", 4: "review", 2: "aspect_term"})
+    data = data.loc[:, [0, 4]]
+    data = data.rename(index=str, columns={ 0: "sentiment", 4: "review"})
     sentiment_terms = []
     for review in nlp.pipe(data['review']):
         if review.is_parsed:
@@ -35,13 +37,37 @@ def clean_data(data):
     
 class Classifier:
     """The Classifier"""
-    def __init__(self,vocab_size = 6000,epoch = 7):  #60000?  
+    def __init__(self,vocab_size = 6000,epoch = 5):  
         
-        self.vocab_size=vocab_size# randomly set a maximum size for the vocabulary
+        self.vocab_size=vocab_size
+        #With convolutional layers
+        sentiment_model = Sequential()
+        sentiment_model.add(Embedding(self.vocab_size, self.vocab_size, input_length=self.vocab_size))
+        sentiment_model.add(Convolution1D(64, 3, padding='same'))
+        sentiment_model.add(Convolution1D(32, 3, padding='same'))
+        sentiment_model.add(Convolution1D(16, 3, padding='same'))
+        sentiment_model.add(Flatten())
+        sentiment_model.add(Dropout(0.2))
+        sentiment_model.add(Dense(180,activation='sigmoid'))
+        sentiment_model.add(Dropout(0.2))
+        sentiment_model.add(Dense(3,activation='sigmoid'))
+        sentiment_model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+        '''
+        #With LSTM
+        sentiment_model = Sequential()
+        sentiment_model.add(Embedding(self.vocab_size, 128))
+        sentiment_model.add(LSTM(128,dropout=0.2, recurrent_dropout=0.2)) 
+        sentiment_model.add(Dense(3))
+        sentiment_model.add(Activation('sigmoid'))
+        sentiment_model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+        ''' 
+        '''
+        # Simply with Dense
         sentiment_model = Sequential()
         sentiment_model.add(Dense(512, input_shape=(self.vocab_size,), activation='relu'))
         sentiment_model.add(Dense(3, activation='softmax'))
         sentiment_model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+        '''
         self.model = sentiment_model
         self.tokenizer = Tokenizer(num_words=self.vocab_size)
         self.label_encoder = LabelEncoder()
@@ -62,7 +88,8 @@ class Classifier:
         cat_sentiment = to_categorical(integer_sentiment)
 
 
-        self.model.fit(sentiment_tokenized, cat_sentiment, epochs=self.epoch, verbose=1)
+        #self.model.fit(sentiment_tokenized, cat_sentiment, epochs=self.epoch, verbose=1)
+        self.model.fit(sentiment_tokenized, cat_sentiment, batch_size=50, epochs=self.epoch)
 
 
     def predict(self, datafile):
@@ -76,15 +103,22 @@ class Classifier:
         
         return predicted_sentiment
 
-"""
-classif = Classifier()
+
+classif = Classifier(vocab_size=1000)
 classif.train(PATH_TO_DATA + 'traindata.csv')
 pred = classif.predict(PATH_TO_DATA + 'devdata.csv')
 
 dev = clean_data(pd.read_csv(PATH_TO_DATA + 'devdata.csv',sep='\t',header=None))
 
-sum(pred==dev['sentiment'])/len(pred) """
+sum(pred==dev['sentiment'])/len(pred)
 
-# Améliorations : ajouter des couches de convolution2D?
-# enlever aspect term et category qu'on n'utilise pas ?
+# Améliorations : 
+# Dense : accu de 0.77, très rapide avec 6000
+#LSTM : long avec 300 voc, accu de 0.70, augmenter la taille des batchs ? sans batchs?
+# 6000 bcp trop long
+#Conv 1D : 600, rapide, 0.70
+#6000 : pb de mémoire
+#1000, assez rapide, 0.70
 # source : https://remicnrd.github.io/Aspect-based-sentiment-analysis/
+# https://medium.com/@thoszymkowiak/how-to-implement-sentiment-analysis-using-word-embedding-and-convolutional-neural-networks-on-keras-163197aef623
+# ils disent 20 minutes pour 86% sur le site
