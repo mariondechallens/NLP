@@ -19,8 +19,9 @@ PATH_TO_DATA = "C:/Users/Admin/Documents/Centrale Paris/3A/OMA/NLP/Exo 2/exercis
 #preprocessing of data : extracting the sentiment, the category, the review, the aspect_term
 # from the review, extracting the sentiment terms with the library spacy
 def clean_data(data):
-    data = data.loc[:, [0, 4]]
-    data = data.rename(index=str, columns={ 0: "opinion", 4: "sentence"})
+    data = data.loc[:, [0, 2, 4]]
+    data = data.rename(index=str, columns={ 0: "opinion", 2:"aspect_term",4: "sentence"})
+    data = context_words_sentences(data)
     opinion_words = []
     for sent in nlp.pipe(data['sentence']):
         if sent.is_parsed:
@@ -31,10 +32,35 @@ def clean_data(data):
 
     return data
 
+
 #dev = clean_data(dev)
 #train = clean_data(train)
-   
+
+def context_words(index,window_size,data) :   
+    s = data['sentence'][index]
+    ss = s.lower().split(' ')
+    try :
+        i = ss.index(data['aspect_term'][index])
+    except ValueError:
+        return s
+    l = []
+    for j in range(-window_size, window_size + 1):
+        context_word_pos = i + j
+                # make sure not jump out sentence
+        if context_word_pos < 0 or context_word_pos >= len(ss) :
+            continue
+        l.append(ss[context_word_pos])
+        
+    l = ' '.join(l)
+    return(l)
     
+def context_words_sentences(data,window_size = 5):
+    for i in range(len(data['sentence'])):
+        data['sentence'][i] = context_words(i,window_size,data)
+    return data
+    
+                   
+            
 class Classifier:
     """The Classifier"""
     def __init__(self,vocab_size = 6000,epoch = 5):  
@@ -105,7 +131,7 @@ class Classifier:
         
         return predicted_opinion
 
-'''
+
 classif = Classifier(vocab_size=6000)
 classif.train(PATH_TO_DATA + 'traindata.csv')
 pred = classif.predict(PATH_TO_DATA + 'devdata.csv')
@@ -113,7 +139,7 @@ pred = classif.predict(PATH_TO_DATA + 'devdata.csv')
 dev = clean_data(pd.read_csv(PATH_TO_DATA + 'devdata.csv',sep='\t',header=None))
 
 s = sum(pred==dev['opinion'])/len(pred)
-'''
+
 # Améliorations : 
 # Dense : accu de 0.77, très rapide avec 6000
 #LSTM : long avec 300 voc, accu de 0.70, augmenter la taille des batchs ? sans batchs?
