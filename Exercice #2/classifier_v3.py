@@ -9,6 +9,7 @@ from keras.preprocessing.text import Tokenizer
 from sklearn.preprocessing import LabelEncoder
 from keras.utils import to_categorical
 
+#Attention : cette ligne doit pouvoir être lancée de l'ordi de la prof !
 nlp = spacy.load('C:/Users/Admin/Anaconda3/envs/py35/lib/site-packages/en_core_web_sm/en_core_web_sm-2.0.0')
 
 PATH_TO_DATA = "C:/Users/Admin/Documents/Centrale Paris/3A/OMA/NLP/Exo 2/exercise2/exercise2/data/"
