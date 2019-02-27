@@ -2,7 +2,7 @@ import time
 import numpy as np
 
 #from classifier import Classifier
-from classifier_v3 import Classifier
+from classifier import Classifier
 from eval import eval_file, eval_list, load_label_output
 
 def set_reproductible():

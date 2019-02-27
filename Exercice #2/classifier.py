@@ -2,20 +2,14 @@
 import pandas as pd
 import spacy
 from keras.models import Sequential
-from keras.layers import Dense, Dropout, Activation, LSTM, Flatten, Convolution1D
-
-from keras.layers.embeddings import Embedding
+from keras.layers import Dense
 from keras.preprocessing.text import Tokenizer
 from sklearn.preprocessing import LabelEncoder
 from keras.utils import to_categorical
 
-#Attention : cette ligne doit pouvoir être lancée de l'ordi de la prof !
+#nlp = spacy.load('en')
 nlp = spacy.load('C:/Users/Admin/Anaconda3/envs/py35/lib/site-packages/en_core_web_sm/en_core_web_sm-2.0.0')
 
-PATH_TO_DATA = "C:/Users/Admin/Documents/Centrale Paris/3A/OMA/NLP/Exo 2/exercise2/exercise2/data/"
-
-#dev = pd.read_csv(PATH_TO_DATA + 'devdata.csv',sep='\t',header=None)
-#train = pd.read_csv(PATH_TO_DATA + 'traindata.csv',sep='\t',header = None)
 
 #preprocessing of data : extracting the sentiment, the category, the review, the aspect_term
 # from the review, extracting the sentiment terms with the library spacy
@@ -32,10 +26,6 @@ def clean_data(data):
     data['opinion_words'] = opinion_words
 
     return data
-
-
-#dev = clean_data(dev)
-#train = clean_data(train)
 
 def context_words(index,window_size,data) :   
     s = data['sentence'][index]
@@ -55,7 +45,7 @@ def context_words(index,window_size,data) :
     l = ' '.join(l)
     return(l)
     
-def context_words_sentences(data,window_size = 5):
+def context_words_sentences(data,window_size = 4):
     for i in range(len(data['sentence'])):
         data['sentence'][i] = context_words(i,window_size,data)
     return data
@@ -67,37 +57,13 @@ class Classifier:
     def __init__(self,vocab_size = 6000,epoch = 5):  
         
         self.vocab_size=vocab_size
-        '''
-        #With convolutional layers
-        model = Sequential()
-        model.add(Embedding(self.vocab_size, self.vocab_size, input_length=self.vocab_size))
-        model.add(Convolution1D(64, 3, padding='same'))
-        model.add(Convolution1D(32, 3, padding='same'))
-        model.add(Convolution1D(16, 3, padding='same'))
-        model.add(Flatten())
-        model.add(Dropout(0.2))
-        model.add(Dense(180,activation='sigmoid'))
-        model.add(Dropout(0.2))
-        model.add(Dense(3,activation='sigmoid'))
-        model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
-        '''
-        '''
-        #With LSTM
-        model = Sequential()
-        model.add(Embedding(self.vocab_size, 128))
-        model.add(LSTM(128,dropout=0.2, recurrent_dropout=0.2)) 
-        model.add(Dense(3))
-        model.add(Activation('sigmoid'))
-        model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
-        ''' 
-        
-        # Simply with Dense
+ 
         model = Sequential()
         model.add(Dense(512, input_shape=(self.vocab_size,), activation='relu'))
         model.add(Dense(3, activation='softmax'))
         model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
-        
         self.model = model
+        
         self.tokenizer = Tokenizer(num_words=self.vocab_size)
         self.label_encoder = LabelEncoder()
         self.epoch = epoch
@@ -132,23 +98,3 @@ class Classifier:
         
         return predicted_opinion
 
-"""
-classif = Classifier(vocab_size=6000)
-classif.train(PATH_TO_DATA + 'traindata.csv')
-pred = classif.predict(PATH_TO_DATA + 'devdata.csv')
-
-dev = clean_data(pd.read_csv(PATH_TO_DATA + 'devdata.csv',sep='\t',header=None))
-
-s = sum(pred==dev['opinion'])/len(pred)
-"""
-# Améliorations : 
-# Dense : accu de 0.77, très rapide avec 6000
-#LSTM : long avec 300 voc, accu de 0.70, augmenter la taille des batchs ? sans batchs?
-# 6000 bcp trop long
-#Conv 1D : 600, rapide, 0.70
-#6000 : pb de mémoire, trop gros vecteurs
-#1000, assez rapide, 0.70
-#3000 : sans batchs
-# source : https://remicnrd.github.io/Aspect-based-sentiment-analysis/
-# https://medium.com/@thoszymkowiak/how-to-implement-sentiment-analysis-using-word-embedding-and-convolutional-neural-networks-on-keras-163197aef623
-# ils disent 20 minutes pour 86% sur le site
