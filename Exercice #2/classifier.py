@@ -132,7 +132,7 @@ class Classifier:
         
         return predicted_opinion
 
-
+"""
 classif = Classifier(vocab_size=6000)
 classif.train(PATH_TO_DATA + 'traindata.csv')
 pred = classif.predict(PATH_TO_DATA + 'devdata.csv')
@@ -140,7 +140,7 @@ pred = classif.predict(PATH_TO_DATA + 'devdata.csv')
 dev = clean_data(pd.read_csv(PATH_TO_DATA + 'devdata.csv',sep='\t',header=None))
 
 s = sum(pred==dev['opinion'])/len(pred)
-
+"""
 # Améliorations : 
 # Dense : accu de 0.77, très rapide avec 6000
 #LSTM : long avec 300 voc, accu de 0.70, augmenter la taille des batchs ? sans batchs?
