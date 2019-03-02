@@ -7,8 +7,8 @@ from keras.preprocessing.text import Tokenizer
 from sklearn.preprocessing import LabelEncoder
 from keras.utils import to_categorical
 
-#nlp = spacy.load('en')
-nlp = spacy.load('C:/Users/Admin/Anaconda3/envs/py35/lib/site-packages/en_core_web_sm/en_core_web_sm-2.0.0')
+nlp = spacy.load('en')
+#nlp = spacy.load('C:/Users/Admin/Anaconda3/envs/py35/lib/site-packages/en_core_web_sm/en_core_web_sm-2.0.0')
 
 
 #preprocessing of data : extracting the sentiment, the category, the review, the aspect_term
