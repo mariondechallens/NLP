@@ -23,10 +23,9 @@ def text2sentences(path):
             sentences.append( l.lower().split() )
     return sentences
 
-train = text2sentences(rep+'train_none_original.txt')
-true = text2sentences(rep+'train_none_original_no_cands.txt')
+#train = text2sentences(rep+'train_none_original.txt')
+#true = text2sentences(rep+'train_none_original_no_cands.txt')
 
-s = train[0]
 
 def text2sentences2(path):
     # feel free to make a better tokenization/pre-processing
@@ -50,8 +49,8 @@ lemmer = nltk.stem.WordNetLemmatizer()
 #nltk.download('wordnet')
 #nltk.download('punkt')
 
-sent_tokens = nltk.sent_tokenize(utt)# converts to list of sentences 
-word_tokens = nltk.word_tokenize(utt)# converts to list of words
+#sent_tokens = nltk.sent_tokenize(utt)# converts to list of sentences 
+#word_tokens = nltk.word_tokenize(utt)# converts to list of words
 
 def LemTokens(tokens):
     return [lemmer.lemmatize(token) for token in tokens]
@@ -74,9 +73,21 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 utt_t  = []
-utt_t.append(utt)
 for ans in answers :
     utt_t.append(ans)
+n = len(utt_t[-1])
+utt_t[-1] = utt_t[-1][0:(n-2)]
+utt_t.append(utt[1:len(utt)]) #utterance of user at last
+
+corpus = ['This is the first document.','This document is the second document.','this is the third document.']
+vectorizer = TfidfVectorizer()
+X = vectorizer.fit_transform(corpus)
+X.shape
+vals = cosine_similarity(X[-1], X)
+idx=vals.argsort()[0][-2] #highest similarity except one (the last one)
+flat = vals.flatten()
+flat.sort()
+req_tfidf = flat[-2]
 
 def response(user_response):
     robo_response=''
