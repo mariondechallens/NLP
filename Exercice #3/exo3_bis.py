@@ -54,9 +54,19 @@ for i in range(len(answers)-1):
 df_train = pd.DataFrame(data = row)
 
 row2 = []
-row2.append({'context': cont3, 'correct': cor, 'dis1': answers[0],'dis2': answers[1],'dis3': answers[2],'dis4': answers[3],'dis5': answers[4],'dis6': answers[5], \
-'dis7': answers[6],'dis8': answers[7],'dis9': answers[8],'dis10': answers[9],'dis11': answers[10],'dis12': answers[11],'dis13': answers[12], \
-'dis14': answers[13],'dis15': answers[14],'dis16': answers[15],'dis17': answers[16],'dis18': answers[17], 'dis19': answers[18]})
+for i in range(3):
+    dial = train[(15*i):((i+1)*15)]
+    cont = dial[0:8]
+    cont = cleaning(cont)
+    cont = ' '.join(cont)
+    distr = dial[8].split("\t")
+    cor = distr[1]
+    answers = distr[3].split("|")     
+    
+    row2.append({'context': cont, 'correct': cor, 'dis1': answers[0],'dis2': answers[1],'dis3': answers[2],'dis4': answers[3],'dis5': answers[4],'dis6': answers[5], \
+                 'dis7': answers[6],'dis8': answers[7],'dis9': answers[8],'dis10': answers[9],'dis11': answers[10],'dis12': answers[11],'dis13': answers[12], \
+                 'dis14': answers[13],'dis15': answers[14],'dis16': answers[15],'dis17': answers[16],'dis18': answers[17], 'dis19': answers[18]})
+
             
 df_test = pd.DataFrame(data = row2)
 
@@ -105,6 +115,7 @@ y = [pred.predict(df_test.context[x], df_test.iloc[x,1:].values) for x in range(
 for n in [1, 2, 5, 10, 15, 20]:
     print('Recall at ',n)
     print(evaluate_recall(y_random, y_test, n))
+    
 
-#Dual Encoder LSTM
+#Dual Encoder LSTM : hard
     
