@@ -40,7 +40,7 @@ def cleaning(cont):
     cont2 = ' '.join(cont2)    
     return cont2
 
-cont2 = cleaning(cont)
+#cont2 = cleaning(cont)
 
 def add_cont(cont,sent):
     cont2 = []
@@ -49,8 +49,11 @@ def add_cont(cont,sent):
     cont2 = ' '.join(cont2) 
     return cont2
 
-cont3 = add_cont(cont2,utt[1:])
-
+#cont3 = add_cont(cont2,utt[1:])
+def remove_digit(utt):
+    c = [w for w in utt if w.isdigit()==False]
+    c =''.join(c)
+    return c
 #df train
 row = []
 dial = train[0:15]
@@ -61,11 +64,11 @@ for j in range(8,n_d):
     distr = dial[j].split("\t")
     cor = distr[1]
     utt = distr[0]         
-    cont = add_cont(cont,utt[1:])
+    cont = add_cont(cont,remove_digit(utt))
     row.append({'context': cont, 'utt': cor, 'xlabel': 1})
     answers = distr[3].split("|") 
     for i in range(len(answers)-1):
-        d = {'context': cont3, 'utt': answers[i], 'xlabel': 0}
+        d = {'context': cont, 'utt': answers[i], 'xlabel': 0}
         row.append(d)   
     cont = add_cont(cont,cor)
 
@@ -84,7 +87,7 @@ for i in range(2):
         cor = distr[1]
         utt = distr[0]
         answers = distr[3].split("|")     
-        cont = add_cont(cont,utt[1:])
+        cont = add_cont(cont,remove_digit(utt))
         row2.append({'context': cont, 'correct': cor, 'dis1': answers[0],'dis2': answers[1],'dis3': answers[2],'dis4': answers[3],'dis5': answers[4],'dis6': answers[5], \
                  'dis7': answers[6],'dis8': answers[7],'dis9': answers[8],'dis10': answers[9],'dis11': answers[10],'dis12': answers[11],'dis13': answers[12], \
                  'dis14': answers[13],'dis15': answers[14],'dis16': answers[15],'dis17': answers[16],'dis18': answers[17], 'dis19': answers[18]})
@@ -136,7 +139,7 @@ pred.train(df_train)
 y = [pred.predict(df_test.context[x], df_test.iloc[x,1:].values) for x in range(len(df_test))]
 for n in [1, 2, 5, 10, 15, 20]:
     print('Recall at ',n)
-    print(evaluate_recall(y_random, y_test, n))
+    print(evaluate_recall(y, y_test, n))
     
 
 #Dual Encoder LSTM : hard

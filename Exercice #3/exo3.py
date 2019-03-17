@@ -4,7 +4,7 @@ Created on Sat Mar 16 09:27:11 2019
 
 @author: Admin
 """
-import numpy as np
+import pandas as pd
 import nltk
 import string
 import random
@@ -140,6 +140,66 @@ for sent in d:
         res.append(False)
  
 sum(res)/len(d) #bad : besoin du contexte pour la réponse
+## try with context
+train_c = text2sentences2(rep+'train_both_original.txt')
+
+def cleaning(cont):
+    cont2 = []
+    for sent in cont :
+        sent = sent.strip('\n')
+        sent = ' '.join([w for w in sent.split()[3:]])
+        cont2.append(sent)
+        
+    cont2 = ' '.join(cont2)    
+    return cont2
+
+#cont2 = cleaning(cont)
+
+def add_cont(cont,sent):
+    cont2 = []
+    cont2.append(cont)
+    cont2.append(sent)
+    cont2 = ' '.join(cont2) 
+    return cont2
+
+#cont3 = add_cont(cont2,utt[1:])
+def remove_digit(utt):
+    c = [w for w in utt if w.isdigit()==False]
+    c =''.join(c)
+    return c
+
+
+all_rep = []
+for i in range(2):
+    dial = train_c[(15*i):((i+1)*15)]
+    n_d = len(dial)
+    cont = dial[0:8]
+    cont = cleaning(cont)
+    
+    for j in range(8,n_d):
+        distr = dial[j].split("\t")
+        cor = distr[1]
+        utt = distr[0]
+        answers = distr[3].split("|")     
+        cont = add_cont(cont,remove_digit(utt))
+        resp  = []
+        for ans in answers :
+            resp.append(ans)
+        n = len(resp[-1])
+        resp[-1] = resp[-1][0:(n-2)]
+        resp.append(cont)
+        cont = add_cont(cont,cor)
+        all_rep.append(resp)
+            
+res = []    
+for sent in all_rep:
+    idx = response(sent)
+    if (idx == 19): #correct answer
+        res.append(True)
+    else:
+        res.append(False)
+ 
+sum(res)/len(d) #encore pire avec le contexte ??
 
 
 flag=True
