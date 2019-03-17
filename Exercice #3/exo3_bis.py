@@ -6,9 +6,7 @@ Created on Sun Mar 17 09:47:04 2019
 """
 import pandas as pd
 import numpy as np
-import nltk
-import string
-import random
+
 data = 'C:/Users/Admin/Documents/Centrale Paris/3A/OMA/NLP/Exo 3/convai2_fix_723.tar'
 rep = 'C:/Users/Admin/'
 #source :http://www.wildml.com/2016/07/deep-learning-for-chatbots-2-retrieval-based-model-tensorflow/
@@ -36,13 +34,22 @@ def cleaning(cont):
     cont2 = []
     for sent in cont :
         sent = sent.strip('\n')
-        sp = sent.split()
-        sent = ' '.join([w for w in sp[3:len(sp)]])
+        sent = ' '.join([w for w in sent.split()[3:]])
         cont2.append(sent)
+        
+    cont2 = ' '.join(cont2)    
     return cont2
+
 cont2 = cleaning(cont)
 
-cont3 = ' '.join(cont2)
+def add_cont(cont,sent):
+    cont2 = []
+    cont2.append(cont)
+    cont2.append(sent)
+    cont2 = ' '.join(cont2) 
+    return cont2
+
+cont3 = add_cont(cont2,utt[1:])
 
 row = []
 row.append({'context': cont3, 'utt': cor, 'xlabel': 1})
@@ -54,16 +61,18 @@ for i in range(len(answers)-1):
 df_train = pd.DataFrame(data = row)
 
 row2 = []
-for i in range(3):
+for i in range(2):
     dial = train[(15*i):((i+1)*15)]
+    n_d = len(dial)
     cont = dial[0:8]
     cont = cleaning(cont)
-    cont = ' '.join(cont)
-    distr = dial[8].split("\t")
-    cor = distr[1]
-    answers = distr[3].split("|")     
     
-    row2.append({'context': cont, 'correct': cor, 'dis1': answers[0],'dis2': answers[1],'dis3': answers[2],'dis4': answers[3],'dis5': answers[4],'dis6': answers[5], \
+    for j in range(8,n_d):
+        distr = dial[j].split("\t")
+        cor = distr[1]
+        answers = distr[3].split("|")     
+    
+        row2.append({'context': cont, 'correct': cor, 'dis1': answers[0],'dis2': answers[1],'dis3': answers[2],'dis4': answers[3],'dis5': answers[4],'dis6': answers[5], \
                  'dis7': answers[6],'dis8': answers[7],'dis9': answers[8],'dis10': answers[9],'dis11': answers[10],'dis12': answers[11],'dis13': answers[12], \
                  'dis14': answers[13],'dis15': answers[14],'dis16': answers[15],'dis17': answers[16],'dis18': answers[17], 'dis19': answers[18]})
 
