@@ -111,8 +111,8 @@ def response(user_response):
 # la phrase correcte et est l'avant dernière phrase de utt_t
 # i.e. idx = len(utt_t) -2 : 19
         
-##besoin du contexte pour la réponse
-def user_response(data):
+
+def prep_response(data):
     all_resp = []
     for i_dial in range(len(data)):
         dial = data[i_dial]
@@ -130,7 +130,7 @@ def user_response(data):
         all_resp.append(resp)
     return all_resp
 
-d = user_response(train2[0:100])   
+d = prep_response(train2[0:100])   
 res = []    
 for sent in d:
     idx = response(sent)
@@ -139,8 +139,8 @@ for sent in d:
     else:
         res.append(False)
  
-sum(res)/100 #bad
-res[5]
+sum(res)/len(d) #bad : besoin du contexte pour la réponse
+
 
 flag=True
 print("ROBO: My name is Robo. I will answer your queries about Chatbots. If you want to exit, type Bye!")
@@ -163,5 +163,63 @@ while(flag==True):
         print("ROBO: Bye! take care..")
         
      
-
+# choosing between utterances
 # source : https://medium.com/analytics-vidhya/building-a-simple-chatbot-in-python-using-nltk-7c8c8215ac6e
+        
+# generating utterances 
+# https://lizadaly.com/brobot/    
+        
+# Sentences we'll respond with if the user greeted us
+GREETING_KEYWORDS = ("hello", "hi", "greetings", "sup", "what's up",)
+
+GREETING_RESPONSES = ["'sup bro", "hey", "*nods*", "hey you get my snap?"]
+
+def check_for_greeting(sentence):
+    """If any of the words in the user's input was a greeting, return a greeting response"""
+    for word in sentence.words:
+        if word.lower() in GREETING_KEYWORDS:
+            return random.choice(GREETING_RESPONSES)        
+        
+from textblob import TextBlob
+from configparser import FILTER_WORDS
+        
+def respond(sentence):
+    """Parse the user's inbound sentence and find candidate terms that make up a best-fit response"""
+    cleaned = preprocess_text(sentence)
+    parsed = TextBlob(cleaned)
+
+    # Loop through all the sentences, if more than one. This will help extract the most relevant
+    # response text even across multiple sentences (for example if there was no obvious direct noun
+    # in one sentence
+    pronoun, noun, adjective, verb = find_candidate_parts_of_speech(parsed)
+
+    # If we said something about the bot and used some kind of direct noun, construct the
+    # sentence around that, discarding the other candidates
+    resp = check_for_comment_about_bot(pronoun, noun, adjective)
+
+    # If we just greeted the bot, we'll use a return greeting
+    if not resp:
+        resp = check_for_greeting(parsed)
+
+    if not resp:
+        # If we didn't override the final sentence, try to construct a new one:
+        if not pronoun:
+            resp = random.choice(NONE_RESPONSES)
+        elif pronoun == 'I' and not verb:
+            resp = random.choice(COMMENTS_ABOUT_SELF)
+        else:
+            resp = construct_response(pronoun, noun, verb)
+
+    # If we got through all that with nothing, use a random response
+    if not resp:
+        resp = random.choice(NONE_RESPONSES)
+
+    logger.info("Returning phrase '%s'", resp)
+    # Check that we're not going to say anything obviously offensive
+    filter_response(resp)
+
+    return resp
+        
+        
+        
+        
