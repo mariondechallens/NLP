@@ -20,16 +20,31 @@ def text2sentences2(path):
     return sentences
 
 train = text2sentences2(rep+'train_both_original.txt')
-dial = train[0:15]
-dial2 = train[15:30]
+#séparer les dialogues 
 
-cont = dial[0:8]
-distr = dial[8].split("\t")
-utt = distr[0]
-cor = distr[1]
-answers = distr[3].split("|") #correct one at the end
-dis1 = answers[0]
+def sep_dial(train):
+    indexes = []
+    for i in range(len(train)) :
+        if (train[i][0:14] == "1 your persona"):
+            indexes.append(i)
+    indexes.append(len(train))
+    ll = []
+    for i in range(len(indexes)-1):
+        ll.append(train[indexes[i]:indexes[i+1]])
+    return ll 
 
+list_dial = sep_dial(train)
+
+def find_cont(dial):
+    indexes = []
+    for i in range(len(dial)):
+        if (dial[i][2:19] == "partner's persona" or dial[i][3:20] == "partner's persona" ):
+            indexes.append(i)
+    cont = dial[0:(indexes[-1]+1)]
+    return cont
+        
+    
+    
 def cleaning(cont):
     cont2 = []
     for sent in cont :
@@ -40,7 +55,6 @@ def cleaning(cont):
     cont2 = ' '.join(cont2)    
     return cont2
 
-#cont2 = cleaning(cont)
 
 def add_cont(cont,sent):
     cont2 = []
@@ -49,26 +63,22 @@ def add_cont(cont,sent):
     cont2 = ' '.join(cont2) 
     return cont2
 
-#cont3 = add_cont(cont2,utt[1:])
 def remove_digit(utt):
     c = [w for w in utt if w.isdigit()==False]
     c =''.join(c)
     return c
 #df train
 
-def add_rows_train(row, n,train):
+def add_rows_train(row, n,train_d):
     for i in range(n):
-        dial = train[(15*i):((i+1)*15)]
+        dial = train_d[i]
         n_d = len(dial)
-        if (dial[8][2:19] != "partner's persona"):
-            cont = dial[0:8]
-            cont = cleaning(cont)
-            n_s = 8
-        if (dial[8][2:19] == "partner's persona"):
-            cont = dial[0:9]
-            cont = cleaning(cont)
-            n_s = 9
-            
+        
+        cont = find_cont(dial)
+        n_s = len(cont)
+        
+        cont = cleaning(cont)
+              
         for j in range(n_s,n_d):
             distr = dial[j].split("\t")
             cor = distr[1]
@@ -85,25 +95,18 @@ def add_rows_train(row, n,train):
         
     return row
 
-row = []
-row = add_rows_train(row,4,train)
-df_train = pd.DataFrame(data = row)
-
 #df test
 
-def add_rows_test(row2,n,train):
+def add_rows_test(row2,n,train_d):
     for i in range(n):
-        dial = train[(15*i):((i+1)*15)]
+        dial = train_d[i]
         n_d = len(dial)
-        if (dial[8][2:19] != "partner's persona"):
-            cont = dial[0:8]
-            cont = cleaning(cont)
-            n_s = 8
-        if (dial[8][2:19] == "partner's persona"):
-            cont = dial[0:9]
-            cont = cleaning(cont)
-            n_s = 9
-    
+        
+        cont = find_cont(dial)
+        n_s = len(cont)
+        
+        cont = cleaning(cont)
+       
         for j in range(n_s,n_d):
             distr = dial[j].split("\t")
             cor = distr[1]
@@ -115,10 +118,21 @@ def add_rows_test(row2,n,train):
                  'dis14': answers[13],'dis15': answers[14],'dis16': answers[15],'dis17': answers[16],'dis18': answers[17], 'dis19': answers[18]})
             cont = add_cont(cont,cor)
     return row2
-   
+ 
+
+N = 3000  
+
+#building train data set
+row = []
+row = add_rows_train(row,N,list_dial)
+df_train = pd.DataFrame(data = row)
+
+#building test data set
 row2 = []
-row2 = add_rows_test(row2,4,train) # i=4 pb, plus que 15 phrases   
+row2 = add_rows_test(row2,N,list_dial)    
 df_test = pd.DataFrame(data = row2)
+
+
 
 #Recall@k means that we let the model pick the k best responses out of the 20 possible responses (1 true and 19 distractors)
 def evaluate_recall(y, y_test, k=1):
@@ -165,7 +179,8 @@ y = [pred.predict(df_test.context[x], df_test.iloc[x,1:].values) for x in range(
 for n in [1, 2, 5, 10, 15, 20]:
     print('Recall at ',n)
     print(evaluate_recall(y, y_test, n))
-    
+
+#meilleur avec plus de data en train---logique     
 
 #Dual Encoder LSTM : hard
     
