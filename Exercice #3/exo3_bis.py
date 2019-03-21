@@ -120,7 +120,7 @@ def add_rows_test(row2,n,train_d):
     return row2
  
 
-N = 3000  
+N = 100
 
 #building train data set
 row = []
@@ -180,7 +180,9 @@ for n in [1, 2, 5, 10, 15, 20]:
     print('Recall at ',n)
     print(evaluate_recall(y, y_test, n))
 
-#meilleur avec plus de data en train---logique     
-
+# bizarre que ca peut diminuer quand beaucoup de data...revoir le contexte ?    
+# bon pour N = 100, mais mauvais pour 300 et 3000
 #Dual Encoder LSTM : hard
+    
+#Generate sentences 
     
