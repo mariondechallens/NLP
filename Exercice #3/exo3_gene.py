@@ -16,18 +16,19 @@ def text2sentences2(path):
             sentences.append( l.lower() )
     return sentences
 
-train = text2sentences2(rep+'train_both_original.txt')
+train = text2sentences2(rep+'train_none_original.txt')
 
 
 # source : https://hub.packtpub.com/build-generative-chatbot-using-recurrent-neural-networks-lstm-rnns/
 # Creating Vocabulary
+from exo3_bis import *
 import numpy as np
 import nltk
 import collections
 counter = collections.Counter()
-for i in range(len(train)):
-    for word in nltk.word_tokenize(train[i]):
-        if word.isalpha() ==True:
+for i in range(len(train[0:100])):
+    for word in nltk.word_tokenize(train[i]): # to do : cleaning of train[i] before !
+        if word.isalpha == True :
             counter[word]+=1
             word2idx = {w:(i+1) for i,(w,_) in enumerate(counter.most_common())}
             idx2word = {v:k for k,v in word2idx.items()}
@@ -37,6 +38,7 @@ vocab_size = len(word2idx)+1
 print(vocab_size)
 
 
+
 # encoding and decoding functions
 def encode(sentence, maxlen,vocab_size):
     indices = np.zeros((maxlen, vocab_size))
@@ -44,7 +46,7 @@ def encode(sentence, maxlen,vocab_size):
     for i, w in enumerate(nltk.word_tokenize(sentence)):
         if i == maxlen: break
         indices[i, word2idx[w]] = 1
-        return indices
+    return indices
 
 def decode(indices, calc_argmax=True):
     if calc_argmax:
@@ -64,7 +66,7 @@ def create_questions(question_maxlen,vocab_size,Questions):
         question_idx[q] = question
     return question_idx
 
-quesns_train = create_questions(question_maxlen=question_maxlen, vocab_size=vocab_size)
+
 
 def create_answers(answer_maxlen,vocab_size,Answers):
     answer_idx = np.zeros(shape=(len(Answers),answer_maxlen, vocab_size))
@@ -73,12 +75,21 @@ def create_answers(answer_maxlen,vocab_size,Answers):
         answer_idx[q] = answer
     return answer_idx
 
-answs_train = create_answers(answer_maxlen=answer_maxlen,vocab_size= vocab_size)
+Questions = []
+Answers = []
+for i in range(100):
+    dial = train[i].split("\t")
+    Questions.append(' '.join([w for w in dial[0].split() if w.isalpha()==True]))
+    Answers.append(' '.join([w for w in dial[1].split() if w.isalpha()==True]))
+    
+quesns_train = create_questions(question_maxlen=question_maxlen, vocab_size=vocab_size,Questions = Questions)
+answs_train = create_answers(answer_maxlen=answer_maxlen,vocab_size= vocab_size,Answers = Answers)
 
 from keras.layers import Input,Dense,Dropout,Activation
 from keras.models import Model
 from keras.layers.recurrent import LSTM
 from keras.layers.wrappers import Bidirectional
+from keras.layers import RepeatVector, TimeDistributed, ActivityRegularization
 
 n_hidden = 128
 question_layer = Input(shape=(question_maxlen,vocab_size))
@@ -95,6 +106,8 @@ print (model.summary())
 quesns_train_2 = quesns_train.astype('float32')
 answs_train_2 = answs_train.astype('float32')
 model.fit(quesns_train_2, answs_train_2,batch_size=32,epochs=30, validation_split=0.05)
+# accuracy 0 : does not work :'(
+
 
 # Model prediction
 ans_pred = model.predict(quesns_train_2[0:3])

@@ -24,8 +24,6 @@ def text2sentences(path):
             sentences.append( l.lower().split() )
     return sentences
 
-#train = text2sentences(rep+'train_none_original.txt')
-#true = text2sentences(rep+'train_none_original_no_cands.txt')
 
 
 def text2sentences2(path):
@@ -36,8 +34,8 @@ def text2sentences2(path):
             sentences.append( l.lower() )
     return sentences
 
-train2 = text2sentences2(rep+'train_none_original.txt')
-s2 = train2[5]
+train = text2sentences2(rep+'train_none_original.txt')
+s2 = train[5]
 s3 = s2.split("\t")
 
 utt = s3[0]
