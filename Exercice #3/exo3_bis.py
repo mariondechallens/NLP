@@ -120,7 +120,7 @@ def add_rows_test(row2,n,train_d):
     return row2
  
 
-N = 100
+N = 200
 
 #building train data set
 row = []
@@ -179,10 +179,13 @@ y = [pred.predict(df_test.context[x], df_test.iloc[x,1:].values) for x in range(
 for n in [1, 2, 5, 10, 15, 20]:
     print('Recall at ',n)
     print(evaluate_recall(y, y_test, n))
-
+    
+# 0.42 the best we can get with this method    
 # bizarre que ca peut diminuer quand beaucoup de data...revoir le contexte ?    
 # bon pour N = 100, mais mauvais pour 300 et 3000
 #Dual Encoder LSTM : hard
     
 #Generate sentences 
+    
+    
     
