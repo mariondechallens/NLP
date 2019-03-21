@@ -55,44 +55,69 @@ def remove_digit(utt):
     c =''.join(c)
     return c
 #df train
-row = []
-dial = train[0:15]
-n_d = len(dial)
-cont = dial[0:8]
-cont = cleaning(cont)
-for j in range(8,n_d):
-    distr = dial[j].split("\t")
-    cor = distr[1]
-    utt = distr[0]         
-    cont = add_cont(cont,remove_digit(utt))
-    row.append({'context': cont, 'utt': cor, 'xlabel': 1})
-    answers = distr[3].split("|") 
-    for i in range(len(answers)-1):
-        d = {'context': cont, 'utt': answers[i], 'xlabel': 0}
-        row.append(d)   
-    cont = add_cont(cont,cor)
 
+def add_rows_train(row, n,train):
+    for i in range(n):
+        dial = train[(15*i):((i+1)*15)]
+        n_d = len(dial)
+        if (dial[8][2:19] != "partner's persona"):
+            cont = dial[0:8]
+            cont = cleaning(cont)
+            n_s = 8
+        if (dial[8][2:19] == "partner's persona"):
+            cont = dial[0:9]
+            cont = cleaning(cont)
+            n_s = 9
+            
+        for j in range(n_s,n_d):
+            distr = dial[j].split("\t")
+            cor = distr[1]
+            utt = distr[0]         
+            cont = add_cont(cont,remove_digit(utt))
+            row.append({'context': cont, 'utt': cor, 'xlabel': 1})
+            answers = distr[3].split("|") 
+        
+            for i in range(len(answers)-1):
+                d = {'context': cont, 'utt': answers[i], 'xlabel': 0}
+                row.append(d)  
+                
+            cont = add_cont(cont,cor)
+        
+    return row
+
+row = []
+row = add_rows_train(row,4,train)
 df_train = pd.DataFrame(data = row)
 
 #df test
-row2 = []
-for i in range(2):
-    dial = train[(15*i):((i+1)*15)]
-    n_d = len(dial)
-    cont = dial[0:8]
-    cont = cleaning(cont)
+
+def add_rows_test(row2,n,train):
+    for i in range(n):
+        dial = train[(15*i):((i+1)*15)]
+        n_d = len(dial)
+        if (dial[8][2:19] != "partner's persona"):
+            cont = dial[0:8]
+            cont = cleaning(cont)
+            n_s = 8
+        if (dial[8][2:19] == "partner's persona"):
+            cont = dial[0:9]
+            cont = cleaning(cont)
+            n_s = 9
     
-    for j in range(8,n_d):
-        distr = dial[j].split("\t")
-        cor = distr[1]
-        utt = distr[0]
-        answers = distr[3].split("|")     
-        cont = add_cont(cont,remove_digit(utt))
-        row2.append({'context': cont, 'correct': cor, 'dis1': answers[0],'dis2': answers[1],'dis3': answers[2],'dis4': answers[3],'dis5': answers[4],'dis6': answers[5], \
+        for j in range(n_s,n_d):
+            distr = dial[j].split("\t")
+            cor = distr[1]
+            utt = distr[0]
+            answers = distr[3].split("|")     
+            cont = add_cont(cont,remove_digit(utt))
+            row2.append({'context': cont, 'correct': cor, 'dis1': answers[0],'dis2': answers[1],'dis3': answers[2],'dis4': answers[3],'dis5': answers[4],'dis6': answers[5], \
                  'dis7': answers[6],'dis8': answers[7],'dis9': answers[8],'dis10': answers[9],'dis11': answers[10],'dis12': answers[11],'dis13': answers[12], \
                  'dis14': answers[13],'dis15': answers[14],'dis16': answers[15],'dis17': answers[16],'dis18': answers[17], 'dis19': answers[18]})
-        cont = add_cont(cont,cor)
-            
+            cont = add_cont(cont,cor)
+    return row2
+   
+row2 = []
+row2 = add_rows_test(row2,4,train) # i=4 pb, plus que 15 phrases   
 df_test = pd.DataFrame(data = row2)
 
 #Recall@k means that we let the model pick the k best responses out of the 20 possible responses (1 true and 19 distractors)
