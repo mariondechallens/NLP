@@ -21,14 +21,13 @@ train = text2sentences2(rep+'train_none_original.txt')
 
 # source : https://hub.packtpub.com/build-generative-chatbot-using-recurrent-neural-networks-lstm-rnns/
 # Creating Vocabulary
-from exo3_bis import *
 import numpy as np
 import nltk
 import collections
 counter = collections.Counter()
 for i in range(len(train[0:100])):
     for word in nltk.word_tokenize(train[i]): # to do : cleaning of train[i] before !
-        if word.isalpha == True :
+        if word.isalpha() == True :
             counter[word]+=1
             word2idx = {w:(i+1) for i,(w,_) in enumerate(counter.most_common())}
             idx2word = {v:k for k,v in word2idx.items()}
