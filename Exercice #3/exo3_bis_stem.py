@@ -6,10 +6,10 @@ Created on Sun Mar 17 09:47:04 2019
 import pandas as pd
 import numpy as np
 
-#data = 'C:/Users/Admin/Documents/Centrale Paris/3A/OMA/NLP/Exo 3/convai2_fix_723.tar'
-#rep = 'C:/Users/Admin/'
-data = 'C:/Users/Sophie HU/Desktop/CentraleSupelec/NLP/HW3/convai2_fix_723.tgz'
-rep = 'C:/Users/Sophie HU/Desktop/CentraleSupelec/NLP/HW3/'
+data = 'C:/Users/Admin/Documents/Centrale Paris/3A/OMA/NLP/Exo 3/convai2_fix_723.tar'
+rep = 'C:/Users/Admin/'
+#data = 'C:/Users/Sophie HU/Desktop/CentraleSupelec/NLP/HW3/convai2_fix_723.tgz'
+#rep = 'C:/Users/Sophie HU/Desktop/CentraleSupelec/NLP/HW3/'
 #source :http://www.wildml.com/2016/07/deep-learning-for-chatbots-2-retrieval-based-model-tensorflow/
 
 def text2sentences2(path):
@@ -155,7 +155,7 @@ def dataprocessing(orig):
     
 
 
-N = 2000
+N = 20
 
 #building train data set
 row = []
@@ -226,10 +226,6 @@ for n in [1, 2, 5, 10, 15, 20]:
     print('Recall at ',n)
     print(evaluate_recall(y, y_test, n))
     
-# 0.42 the best we can get with this method    
-# bizarre que ca peut diminuer quand beaucoup de data...revoir le contexte ?    
-# bon pour N = 100, mais mauvais pour 300 et 3000
-#Dual Encoder LSTM : hard
-    
-#Generate sentences 
+# 0.49 the best we can get with this method  pour N = 200 et 2000  
+
     

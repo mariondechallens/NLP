@@ -18,15 +18,68 @@ def text2sentences2(path):
 
 train = text2sentences2(rep+'train_none_original.txt')
 
+import string
+from nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords
+from nltk.stem.porter import PorterStemmer
 
+
+def dataprocessing(orig):
+    # Remove puntuation
+    table = str.maketrans('', '', string.punctuation)
+    new_train = [w.translate(table) for w in orig] #without puntuations
+    
+    # split into words
+    
+    new_train_bis=[]
+    for i in range(len(orig)):
+        new_train_bis.append(word_tokenize(new_train[i]))
+    
+    #Stop Words
+    stop_words = stopwords.words('english')
+    train_=[]
+    for i in range(len(new_train_bis)):
+        train_.append(' '.join([w for w in new_train_bis[i] if not w in stop_words]))
+        
+    #Setm
+    porter = PorterStemmer()
+    stemmed=[]
+    for i in range(len(train_)):
+        stemmed.append(','.join([porter.stem(word) for word in word_tokenize(train_[i])]))
+        
+    return stemmed
+
+t = train[0].split('\t')
+tt = t[3].split('|')
+l = []
+l.append(t[0])
+l.append(t[1])
+l.append(t[3].split('|'))
+tt.append(t[0])
+tt.append(t[1])
+c = dataprocessing(tt)
+cc = ' '.join(c)
+
+def cleaning(data):
+    l = []
+    for i in range(len(data)):
+        dial = train[i].split('\t')
+        ans = dial[3].split('|')
+        ans.append(dial[0])
+        ans.append(dial[1])
+        ans = dataprocessing(ans)
+        l.append(' '.join(ans))
+    return l
+N = 100
+train2 = cleaning(train[0:N])
 # source : https://hub.packtpub.com/build-generative-chatbot-using-recurrent-neural-networks-lstm-rnns/
 # Creating Vocabulary
 import numpy as np
 import nltk
 import collections
 counter = collections.Counter()
-for i in range(len(train[0:100])):
-    for word in nltk.word_tokenize(train[i]): # to do : cleaning of train[i] before !
+for i in range(len(train2)):
+    for word in nltk.word_tokenize(train2[i]): # to do : cleaning of train[i] before !
         if word.isalpha() == True :
             counter[word]+=1
             word2idx = {w:(i+1) for i,(w,_) in enumerate(counter.most_common())}
@@ -78,9 +131,13 @@ Questions = []
 Answers = []
 for i in range(100):
     dial = train[i].split("\t")
-    Questions.append(' '.join([w for w in dial[0].split() if w.isalpha()==True]))
-    Answers.append(' '.join([w for w in dial[1].split() if w.isalpha()==True]))
-    
+    qa = dataprocessing(dial[0:2])
+    q = qa[0].replace(',', ' ')
+    a = qa[1].replace(',', ' ')
+    Questions.append(' '.join([w for w in q.split() if w.isalpha()==True]))
+    Answers.append(' '.join([w for w in a.split() if w.isalpha()==True]))
+
+
 quesns_train = create_questions(question_maxlen=question_maxlen, vocab_size=vocab_size,Questions = Questions)
 answs_train = create_answers(answer_maxlen=answer_maxlen,vocab_size= vocab_size,Answers = Answers)
 
