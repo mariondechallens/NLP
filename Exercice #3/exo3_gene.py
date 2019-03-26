@@ -70,7 +70,7 @@ def cleaning(data):
         ans = dataprocessing(ans)
         l.append(' '.join(ans))
     return l
-N = 100
+N = 1000
 train2 = cleaning(train[0:N])
 # source : https://hub.packtpub.com/build-generative-chatbot-using-recurrent-neural-networks-lstm-rnns/
 # Creating Vocabulary
@@ -141,10 +141,9 @@ for i in range(100):
 quesns_train = create_questions(question_maxlen=question_maxlen, vocab_size=vocab_size,Questions = Questions)
 answs_train = create_answers(answer_maxlen=answer_maxlen,vocab_size= vocab_size,Answers = Answers)
 
-from keras.layers import Input,Dense,Dropout,Activation
+from keras.layers import Input,Dense,Activation
 from keras.models import Model
 from keras.layers.recurrent import LSTM
-from keras.layers.wrappers import Bidirectional
 from keras.layers import RepeatVector, TimeDistributed, ActivityRegularization
 
 n_hidden = 128
@@ -165,7 +164,9 @@ model.fit(quesns_train_2, answs_train_2,batch_size=32,epochs=30, validation_spli
 # accuracy 0 : does not work :'(
 
 
-# Model prediction
+# Model prediction : bad
 ans_pred = model.predict(quesns_train_2[0:3])
+Questions[0:3]
 print (decode(ans_pred[0]))
 print (decode(ans_pred[1]))
+print (decode(ans_pred[2]))
