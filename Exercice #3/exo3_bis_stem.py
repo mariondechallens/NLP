@@ -20,7 +20,7 @@ def text2sentences2(path):
             sentences.append( l.lower() )
     return sentences
 
-train = text2sentences2(rep+'train_both_original.txt')
+train = text2sentences2(rep+'valid_both_original.txt')
 #séparer les dialogues 
 
 def sep_dial(train):
@@ -120,6 +120,34 @@ def add_rows_test(row2,n,train_d):
             cont = add_cont(cont,cor)
     return row2
  
+def add_rows_test2(row2,n,train_d): #we don't know the right utterances in test mode
+    for i in range(n):
+        dial = train_d[i]
+        n_d = len(dial)
+        
+        cont = find_cont(dial)
+        n_s = len(cont)
+        
+        cont = cleaning(cont)
+       
+        for j in range(n_s,n_d):
+            distr = dial[j].split("\t")
+            utt = distr[0]
+            answers = distr[3].split("|")    
+            n_a = len(answers)
+            cont = add_cont(cont,remove_digit(utt))
+            
+            #create dictionary for row2
+            list_of_key = [x for x in range(1,n_a+1)]
+            list_of_key.append('context')
+            
+            list_of_values = [answers[x] for x in range(n_a)]
+            list_of_values.append(cont)
+            
+            dic = dict( zip(list_of_key,list_of_values ))
+            row2.append(dic)
+    return row2
+    
 
 import string
 from nltk.tokenize import word_tokenize
@@ -155,7 +183,7 @@ def dataprocessing(orig):
     
 
 
-N = 20
+N = 200
 
 #building train data set
 row = []
@@ -176,9 +204,17 @@ row2 = []
 row2 = add_rows_test(row2,N,list_dial)    
 df_test_old = pd.DataFrame(data = row2)
 
-df_test = df_test_old
-for i in range(df_test_old.shape[1]):
-    df_test.iloc[:,i]= dataprocessing(df_test_old.iloc[:,i])
+def stemming_test(df):
+    for i in range(df.shape[1]):
+        df.iloc[:,i]= dataprocessing(df.iloc[:,i])
+    return df
+
+df_test = stemming_test(pd.DataFrame(data = row2))
+
+row3 = []
+row3 = add_rows_test2(row3,N,list_dial)
+df_test_old2 = pd.DataFrame(data = row3)
+df_test2 = stemming_test(pd.DataFrame(data = row3))
 
 #Recall@k means that we let the model pick the k best responses out of the 20 possible responses (1 true and 19 distractors)
 def evaluate_recall(y, y_test, k=1):
@@ -218,13 +254,37 @@ class TFIDFPredictor:
         result = np.asarray(result).flatten()
         # Sort by top results and return the indices in descending order
         return np.argsort(result, axis=0)[::-1]    
+
+def retrieve_sentence(y_pred,df_test):
+    l = []
+    for i in range(len(y_pred)) :
+        l.append([y_pred[i][0],df_test.iloc[i,1:][y_pred[i][0]]])
+    return l
+
+def retrieve_sentence2(y_pred,df_test):
+    l = []
+    for i in range(len(y_pred)) :
+        print(i)
+        l.append([y_pred[i][0],df_test2.iloc[i,:df_test2.shape[1]-1][y_pred[i][0]+1]])
+    return l        
     
+        
 pred = TFIDFPredictor()
 pred.train(df_train)
 y = [pred.predict(df_test.context[x], df_test.iloc[x,1:].values) for x in range(len(df_test))]
 for n in [1, 2, 5, 10, 15, 20]:
     print('Recall at ',n)
     print(evaluate_recall(y, y_test, n))
+
+l_stem = retrieve_sentence(y,df_test)
+l = retrieve_sentence(y,df_test_old)
+
+
+y_test2 = np.zeros(len(y_random))
+y2 = [pred.predict(df_test2.context[x], df_test2.iloc[x,:df_test2.shape[1]-1].values) for x in range(len(df_test2))]
+
+l_stem2 = retrieve_sentence2(y2,df_test2)
+l2 = retrieve_sentence2(y2,df_test_old2)   
     
 # 0.49 the best we can get with this method  pour N = 200 et 2000  
 
