@@ -183,7 +183,7 @@ def dataprocessing(orig):
     
 
 
-N = 200
+N = 1000
 
 #building train data set
 row = []
@@ -264,8 +264,7 @@ def retrieve_sentence(y_pred,df_test):
 def retrieve_sentence2(y_pred,df_test):
     l = []
     for i in range(len(y_pred)) :
-        print(i)
-        l.append([y_pred[i][0],df_test2.iloc[i,:df_test2.shape[1]-1][y_pred[i][0]+1]])
+        l.append([y_pred[i][0]+1,df_test.iloc[i,:df_test.shape[1]-1][y_pred[i][0]+1]])
     return l        
     
         
@@ -280,11 +279,20 @@ l_stem = retrieve_sentence(y,df_test)
 l = retrieve_sentence(y,df_test_old)
 
 
-y_test2 = np.zeros(len(y_random))
+y_test2 = np.zeros(len(y_random)) + 19
 y2 = [pred.predict(df_test2.context[x], df_test2.iloc[x,:df_test2.shape[1]-1].values) for x in range(len(df_test2))]
+for n in [1, 2, 5, 10, 15, 20]:
+    print('Recall at ',n)
+    print(evaluate_recall(y2, y_test2, n))
 
 l_stem2 = retrieve_sentence2(y2,df_test2)
 l2 = retrieve_sentence2(y2,df_test_old2)   
+
+s = 0
+for i in range(len(l)):
+    if l[i][1] == l2[i][1]:
+        s = s +1
+s/len(l)  #pb !!!
     
 # 0.49 the best we can get with this method  pour N = 200 et 2000  
 
