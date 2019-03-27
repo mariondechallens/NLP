@@ -292,7 +292,7 @@ s = 0
 for i in range(len(l)):
     if l[i][1] == l2[i][1]:
         s = s +1
-s/len(l)  #pb !!!
+s/len(l)  #pas pareil car pas le même contexte (pas la phrase correcte pour y2)
     
 # 0.49 the best we can get with this method  pour N = 200 et 2000  
 
