@@ -228,6 +228,18 @@ while(flag==True):
 # https://lizadaly.com/brobot/    
         
 # Sentences we'll respond with if the user greeted us
+
+import logging        
+from textblob import TextBlob
+from config import FILTER_WORDS
+
+logging.basicConfig()
+
+logger = logging.getLogger()
+
+logger.setLevel(logging.DEBUG)        
+        
+        
 GREETING_KEYWORDS = ("hello", "hi", "greetings", "sup", "what's up",)
 
 GREETING_RESPONSES = ["'sup bro", "hey", "*nods*", "hey you get my snap?"]
@@ -238,7 +250,75 @@ def check_for_greeting(sentence):
         if word.lower() in GREETING_KEYWORDS:
             return random.choice(GREETING_RESPONSES)        
         
-from textblob import TextBlob
+
+
+
+
+def find_verb(sent):
+
+    """Pick a candidate verb for the sentence."""
+
+    verb = None
+
+    pos = None
+
+    for word, part_of_speech in sent.pos_tags:
+
+        if part_of_speech.startswith('VB'):  # This is a verb
+
+            verb = word
+
+            pos = part_of_speech
+
+            break
+
+    return verb, pos
+
+
+def find_noun(sent):
+
+    """Given a sentence, find the best candidate noun."""
+
+    noun = None
+
+
+
+    if not noun:
+
+        for w, p in sent.pos_tags:
+
+            if p == 'NN':  # This is a noun
+
+                noun = w
+
+                break
+
+    if noun:
+
+        logger.info("Found noun: %s", noun)
+
+
+
+    return noun
+
+
+
+def find_adjective(sent):
+
+    """Given a sentence, find the best candidate adjective."""
+
+    adj = None
+
+    for w, p in sent.pos_tags:
+
+        if p == 'JJ':  # This is an adjective
+
+            adj = w
+
+            break
+
+    return adj
+
 def find_pronoun(sent):
     """Given a sentence, find a preferred pronoun to respond with. Returns None if no candidate
     pronoun is found in the input"""
@@ -284,7 +364,93 @@ SELF_VERBS_WITH_ADJECTIVE = [
     "I'm personally building the {adjective} Economy",
     "I consider myself to be a {adjective}preneur",
 ]
-       
+    
+NONE_RESPONSES = [
+
+    "uh whatever",
+
+    "meet me at the foosball table, bro?",
+
+    "code hard bro",
+
+    "want to bro down and crush code?",
+
+    "I'd like to add you to my professional network on LinkedIn",
+
+    "Have you closed your seed round, dog?",
+
+]
+
+# end
+
+
+
+# start:example-self.py
+
+# If the user tries to tell us something about ourselves, use one of these responses
+
+COMMENTS_ABOUT_SELF = [
+
+    "You're just jealous",
+
+    "I worked really hard on that",
+
+    "My Klout score is {}".format(random.randint(100, 500)),
+
+]
+
+class UnacceptableUtteranceException(Exception):
+
+    """Raise this (uncaught) exception if the response was going to trigger our blacklist"""
+
+    pass
+
+
+
+def starts_with_vowel(word):
+
+    """Check for pronoun compability -- 'a' vs. 'an'"""
+
+    return True if word[0] in 'aeiou' else False
+
+def broback(sentence):
+
+    """Main program loop: select a response for the input sentence and return it"""
+
+    logger.info("Broback: respond to %s", sentence)
+
+    resp = respond(sentence)
+
+    return resp
+
+def preprocess_text(sentence):
+
+    """Handle some weird edge cases in parsing, like 'i' needing to be capitalized
+
+    to be correctly identified as a pronoun"""
+
+    cleaned = []
+
+    words = sentence.split(' ')
+
+    for w in words:
+
+        if w == 'i':
+
+            w = 'I'
+
+        if w == "i'm":
+
+            w = "I'm"
+
+        cleaned.append(w)
+
+
+
+    return ' '.join(cleaned)
+
+ 
+ 
 def respond(sentence):
     """Parse the user's inbound sentence and find candidate terms that make up a best-fit response"""
     cleaned = preprocess_text(sentence)
