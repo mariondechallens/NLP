@@ -570,5 +570,126 @@ def test_unicode():
     
 test_unicode()    
 
+####### Apply to our data
+import pandas as pd
+
+data = 'C:/Users/Admin/Documents/Centrale Paris/3A/OMA/NLP/Exo 3/convai2_fix_723.tar'
+rep = 'C:/Users/Admin/'
+#source :http://www.wildml.com/2016/07/deep-learning-for-chatbots-2-retrieval-based-model-tensorflow/
+
+def text2sentences2(path):
+    # feel free to make a better tokenization/pre-processing
+    sentences = []
+    with open(path) as f:
+        for l in f:
+            sentences.append( l.lower() )
+    return sentences
+
+train = text2sentences2(rep+'valid_both_original.txt')
+#séparer les dialogues 
+
+def sep_dial(train):
+    indexes = []
+    for i in range(len(train)) :
+        if (train[i][0:14] == "1 your persona"):
+            indexes.append(i)
+    indexes.append(len(train))
+    ll = []
+    for i in range(len(indexes)-1):
+        ll.append(train[indexes[i]:indexes[i+1]])
+    return ll 
+
+list_dial = sep_dial(train)
+
+def find_cont(dial):
+    indexes = []
+    for i in range(len(dial)):
+        if (dial[i][2:19] == "partner's persona" or dial[i][3:20] == "partner's persona" ):
+            indexes.append(i)
+    cont = dial[0:(indexes[-1]+1)]
+    return cont
+        
+    
+    
+def cleaning(cont):
+    cont2 = []
+    for sent in cont :
+        sent = sent.strip('\n')
+        sent = ' '.join([w for w in sent.split()[3:]])
+        cont2.append(sent)
+        
+    cont2 = ' '.join(cont2)    
+    return cont2
 
 
+def add_cont(cont,sent):
+    cont2 = []
+    cont2.append(cont)
+    cont2.append(sent)
+    cont2 = ' '.join(cont2) 
+    return cont2
+
+def remove_digit(utt):
+    c = [w for w in utt if w.isdigit()==False]
+    c =''.join(c)
+    return c
+#df train
+
+def add_rows_train_cont(row, n,train_d):
+    for i in range(n):
+        dial = train_d[i]
+        n_d = len(dial)
+        
+        cont = find_cont(dial)
+        n_s = len(cont)
+        
+        cont = cleaning(cont)
+              
+        for j in range(n_s,n_d):
+            distr = dial[j].split("\t")
+            cor = distr[1]
+            utt = distr[0]         
+            cont = add_cont(cont,remove_digit(utt))
+            row.append({'context': cont, 'corr_utt': cor,})   
+                
+            cont = add_cont(cont,cor)
+        
+    return row
+
+def add_rows_train_utt(row, n,train_d):
+    for i in range(n):
+        dial = train_d[i]
+        n_d = len(dial)
+        
+        cont = find_cont(dial)
+        n_s = len(cont)
+        
+                    
+        for j in range(n_s,n_d):
+            distr = dial[j].split("\t")
+            cor = distr[1]
+            utt = remove_digit(distr[0])   
+            row.append({'user_utt': utt, 'corr_ans': cor})
+        
+    return row   
+
+
+N = 100
+
+#building train data set
+row = []
+row = add_rows_train_cont(row,N,list_dial)
+df_train_cont = pd.DataFrame(data = row)
+
+
+N=100
+row2 = []
+row2 = add_rows_train_utt(row2,N,list_dial)
+df_train_utt = pd.DataFrame(data = row2)
+
+l = []
+for i in range(len(df_train_utt)):
+    sent = df_train_utt['user_utt'][i]
+    l.append(broback(sent))
+
+df_train_utt['gene_ans'] = l  # nul
