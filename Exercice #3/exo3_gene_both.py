@@ -131,7 +131,7 @@ def dataprocessing(orig):
     
 
 
-N = 10
+N = 100
 
 #building train data set
 row = []
@@ -154,7 +154,8 @@ import nltk
 import collections
 counter = collections.Counter()
 for i in range(len(df_train)):
-    for word in nltk.word_tokenize(' '.join([df_train['context'][i],df_train['utt'][i]])): # to do : cleaning of train[i] before !
+    for word in nltk.word_tokenize(df_train['utt'][i]): 
+    #for word in nltk.word_tokenize(' '.join([df_train['context'][i],df_train['utt'][i]])): 
         if word.isalpha() == True :
             counter[word]+=1
             word2idx = {w:(i+1) for i,(w,_) in enumerate(counter.most_common())}
@@ -220,7 +221,7 @@ def create_lists_qa(N_t,df_train,nb=10):
         Answers.append(a)
     return Questions, Answers
 
-Questions, Answers = create_lists_qa(70,df_train)
+Questions, Answers = create_lists_qa(500,df_train)
 
 
 quesns_train = create_questions(question_maxlen=question_maxlen, vocab_size=vocab_size,Questions = Questions)
@@ -250,9 +251,8 @@ model.fit(quesns_train_2, answs_train_2,batch_size=32,epochs=30, validation_spli
 
 
 # Model prediction : bad
-ans_pred = model.predict(quesns_train_2[0:3])
-Questions[0:3]
-Answers[0:3]
-print (decode(ans_pred[0]))
-print (decode(ans_pred[1]))
-print (decode(ans_pred[2]))
+ans_pred = model.predict(quesns_train_2[0:10])
+Questions[0:10]
+Answers[0:10]
+for i in range(10):
+    print (decode(ans_pred[i]))  ## bad

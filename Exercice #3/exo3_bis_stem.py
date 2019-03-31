@@ -254,13 +254,13 @@ class TFIDFPredictor:
         result = np.asarray(result).flatten()
         # Sort by top results and return the indices in descending order
         return np.argsort(result, axis=0)[::-1]    
-
+'''
 def retrieve_sentence(y_pred,df_test):
     l = []
     for i in range(len(y_pred)) :
         l.append([y_pred[i][0],df_test.iloc[i,1:][y_pred[i][0]]])
     return l
-
+'''
 def retrieve_sentence2(y_pred,df_test):
     l = []
     for i in range(len(y_pred)) :
@@ -270,6 +270,7 @@ def retrieve_sentence2(y_pred,df_test):
         
 pred = TFIDFPredictor()
 pred.train(df_train)
+'''
 y = [pred.predict(df_test.context[x], df_test.iloc[x,1:].values) for x in range(len(df_test))]
 for n in [1, 2, 5, 10, 15, 20]:
     print('Recall at ',n)
@@ -277,7 +278,7 @@ for n in [1, 2, 5, 10, 15, 20]:
 
 l_stem = retrieve_sentence(y,df_test)
 l = retrieve_sentence(y,df_test_old)
-
+'''
 
 y_test2 = np.zeros(len(y_random)) + 19
 y2 = [pred.predict(df_test2.context[x], df_test2.iloc[x,:df_test2.shape[1]-1].values) for x in range(len(df_test2))]
@@ -287,13 +288,13 @@ for n in [1, 2, 5, 10, 15, 20]:
 
 l_stem2 = retrieve_sentence2(y2,df_test2)
 l2 = retrieve_sentence2(y2,df_test_old2)   
-
+'''
 s = 0
 for i in range(len(l)):
     if l[i][1] == l2[i][1]:
         s = s +1
 s/len(l)  #pas pareil car pas le même contexte (pas la phrase correcte pour y2)
-    
+'''    
 # 0.49 the best we can get with this method  pour N = 200 et 2000  
 
     
