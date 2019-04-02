@@ -313,8 +313,11 @@ for n in [1, 2, 5, 10, 15, 20]:
     print('Recall at ',n)
     print(evaluate_recall(y4, y_test4, n))
 
-l_stem3 = retrieve_sentence2(y4,df_test3)
-l3 = retrieve_sentence2(y4,df_test_old3)    
+l_stem3 = retrieve_sentence2(y3,df_test3)
+l3 = retrieve_sentence2(y3,df_test_old3)   
+
+l_stem4 = l_stem3[len(df_test):] 
+l4 = l3[len(df_test):]
 # 0.49 the best we can get with this method  pour N = 200 et 2000  
 
     
