@@ -21,6 +21,7 @@ def text2sentences2(path):
     return sentences
 
 train = text2sentences2(rep+'valid_both_original.txt')
+train_test = text2sentences2(rep+'train_both_original.txt')
 #séparer les dialogues 
 
 def sep_dial(train):
@@ -35,6 +36,7 @@ def sep_dial(train):
     return ll 
 
 list_dial = sep_dial(train)
+list_dial_test = sep_dial(train_test)
 
 def find_cont(dial):
     indexes = []
@@ -183,7 +185,7 @@ def dataprocessing(orig):
     
 
 
-N = 1000
+N = 200
 
 #building train data set
 row = []
@@ -215,6 +217,13 @@ row3 = []
 row3 = add_rows_test2(row3,N,list_dial)
 df_test_old2 = pd.DataFrame(data = row3)
 df_test2 = stemming_test(pd.DataFrame(data = row3))
+
+row4 = []
+row4 = add_rows_test2(row3,N,list_dial_test)
+df_test_old3 = pd.DataFrame(data = row4)
+df_test3 = stemming_test(pd.DataFrame(data = row4))
+
+
 
 #Recall@k means that we let the model pick the k best responses out of the 20 possible responses (1 true and 19 distractors)
 def evaluate_recall(y, y_test, k=1):
@@ -294,7 +303,16 @@ for i in range(len(l)):
     if l[i][1] == l2[i][1]:
         s = s +1
 s/len(l)  #pas pareil car pas le même contexte (pas la phrase correcte pour y2)
-'''    
+'''
+
+y3 = [pred.predict(df_test3.context[x], df_test3.iloc[x,:df_test3.shape[1]-1].values) for x in range(len(df_test3))]
+y_test3 = np.zeros(len(y3)) + 19
+for n in [1, 2, 5, 10, 15, 20]:
+    print('Recall at ',n)
+    print(evaluate_recall(y3, y_test3, n))
+
+l_stem3 = retrieve_sentence2(y3,df_test3)
+l3 = retrieve_sentence2(y3,df_test_old3)    
 # 0.49 the best we can get with this method  pour N = 200 et 2000  
 
     
