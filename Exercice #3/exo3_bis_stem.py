@@ -225,6 +225,7 @@ df_test3 = stemming_test(pd.DataFrame(data = row4))
 
 
 
+
 #Recall@k means that we let the model pick the k best responses out of the 20 possible responses (1 true and 19 distractors)
 def evaluate_recall(y, y_test, k=1):
     num_examples = float(len(y))
@@ -288,7 +289,7 @@ for n in [1, 2, 5, 10, 15, 20]:
 l_stem = retrieve_sentence(y,df_test)
 l = retrieve_sentence(y,df_test_old)
 '''
-
+# train data set 
 y_test2 = np.zeros(len(y_random)) + 19
 y2 = [pred.predict(df_test2.context[x], df_test2.iloc[x,:df_test2.shape[1]-1].values) for x in range(len(df_test2))]
 for n in [1, 2, 5, 10, 15, 20]:
@@ -304,15 +305,16 @@ for i in range(len(l)):
         s = s +1
 s/len(l)  #pas pareil car pas le même contexte (pas la phrase correcte pour y2)
 '''
-
+#test data set
 y3 = [pred.predict(df_test3.context[x], df_test3.iloc[x,:df_test3.shape[1]-1].values) for x in range(len(df_test3))]
-y_test3 = np.zeros(len(y3)) + 19
+y4 = y3[len(df_test):]
+y_test4 = np.zeros(len(y4)) + 19
 for n in [1, 2, 5, 10, 15, 20]:
     print('Recall at ',n)
-    print(evaluate_recall(y3, y_test3, n))
+    print(evaluate_recall(y4, y_test4, n))
 
-l_stem3 = retrieve_sentence2(y3,df_test3)
-l3 = retrieve_sentence2(y3,df_test_old3)    
+l_stem3 = retrieve_sentence2(y4,df_test3)
+l3 = retrieve_sentence2(y4,df_test_old3)    
 # 0.49 the best we can get with this method  pour N = 200 et 2000  
 
     
