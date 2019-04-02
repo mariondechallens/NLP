@@ -185,7 +185,7 @@ def dataprocessing(orig):
     
 
 
-N = 200
+N = 20
 
 #building train data set
 row = []

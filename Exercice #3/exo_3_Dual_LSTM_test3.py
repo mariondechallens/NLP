@@ -10,14 +10,18 @@ import operator
 
 np.random.seed(0)
 # https://github.com/Janinanu/Retrieval-based_Chatbot
-import os
-os.chdir('C:/Users/Sophie HU/Desktop/CentraleSupelec/NLP/HW3/Exercice #3/')
-import exo3_bis_stem as data_prep
-data = 'C:/Users/Sophie HU/Desktop/CentraleSupelec/NLP/HW3/convai2_fix_723.tgz'
-rep = 'C:/Users/Sophie HU/Desktop/CentraleSupelec/NLP/HW3/'
-os.chdir(rep)
+#import os
+#os.chdir('C:/Users/Sophie HU/Desktop/CentraleSupelec/NLP/HW3/Exercice #3/')
 
-nb_epochs=50
+import exo3_bis_stem as data_prep
+#data = 'C:/Users/Sophie HU/Desktop/CentraleSupelec/NLP/HW3/convai2_fix_723.tgz'
+#rep = 'C:/Users/Sophie HU/Desktop/CentraleSupelec/NLP/HW3/'
+
+data = 'C:/Users/Admin/Documents/Centrale Paris/3A/OMA/NLP/Exo 3/convai2_fix_723.tar'
+rep = 'C:/Users/Admin/'
+#os.chdir(rep)
+
+nb_epochs=2
 
 ###############################################################################
 # Prepare input for LSTM
@@ -43,10 +47,11 @@ N=100
 row = []
 row = data_prep.add_rows_train(row,N,list_dial)
 df_train_old = pd.DataFrame(data = row)
+df_train_old['Bool'] = np.zeros(len(df_train_old))
 
 
 df_train = pd.DataFrame()
-df_train = remove_empty(df_train_old)
+#df_train = remove_empty(df_train_old)
 df_train['xlabel']=df_train_old['xlabel']
 df_train['context']= data_prep.dataprocessing(df_train_old['context'])
 df_train['utt']= data_prep.dataprocessing(df_train_old['utt'])
@@ -54,16 +59,18 @@ df_train['utt']= data_prep.dataprocessing(df_train_old['utt'])
 
 #building test data set
 row2 = []
-row2 = data_prep.add_rows_test(row2,N,list_dial)    
+#row2 = data_prep.add_rows_test(row2,N,list_dial)  
+row2 = data_prep.add_rows_test(row2,N,list_dial)  
 df_test_old = pd.DataFrame(data = row2)
-df_test_old = remove_empty(df_test_old)
+#df_test_old = remove_empty(df_test_old)
 
-df_test = df_test_old
-for i in range(df_test_old.shape[1]):
-    df_test.iloc[:,i]= data_prep.dataprocessing(df_test_old.iloc[:,i])
+#df_test = df_test_old
+#for i in range(df_test_old.shape[1]):
+#    df_test.iloc[:,i]= data_prep.dataprocessing(df_test_old.iloc[:,i])
 
+df_test = data_prep.stemming_test(pd.DataFrame(data = row2))
   
-del(df_train_old)
+del(df_train_old)  #delete
 del(df_test_old)
 ###############################################################################
 
@@ -162,7 +169,8 @@ def load_ids_and_labels(row, word_to_id):
 
 vocab_train = create_vocab(df_train)
 vocab_to_id = create_word_to_id(vocab_train)
-id_to_vec,emb_dim= create_id_to_vec(vocab_to_id,'glove.6B.100d.txt')
+#id_to_vec,emb_dim= create_id_to_vec(vocab_to_id,'glove.6B.100d.txt')
+id_to_vec,emb_dim= create_id_to_vec(vocab_to_id,'C:/Users/Admin/Downloads/glove.6B.100d.txt')
 validation_dataframe = df_test
 ###############################################################################
     
@@ -381,13 +389,15 @@ for name, param in dual_encoder.named_parameters():
         print(name)
 # Create Valisation set:10 pct of train, and train will become first 10 pct of train       
 validation_dataframe=df_train[int(df_train.shape[0]/10)*9:df_train.shape[0]]  
-df_train = df_train[0:(int(df_train.shape[0]/10)*9-1)]  
+#df_train = df_train[0:(int(df_train.shape[0]/10)*9-1)]  
+df_train2 = df_train[0:int(df_train.shape[0]/10)*9] 
 
-train_model(df_train,validation_dataframe,learning_rate = 0.01, l2_penalty = 0.01,epochs = nb_epochs)#0.0001,0.0001,100
+train_model(df_train2,validation_dataframe,learning_rate = 0.01, l2_penalty = 0.01,epochs = nb_epochs)#0.0001,0.0001,100
 
 
-# load model for testing        
-dual_encoder.load_state_dict(torch.load('saved_model_13193_examples.pt'))
+# load model for testing  
+dual_encoder.load_state_dict(torch.load('C:/Users/Admin/Documents/GitHub/NLP/Exercice #3/saved_model_13230_examples.pt'))      
+#dual_encoder.load_state_dict(torch.load('saved_model_13193_examples.pt'))
 dual_encoder.eval()
 
 
@@ -476,7 +486,7 @@ def get_recall_at_k(k,scores_per_example_and_candidate):
     for example, score_per_candidate_dict in sorted(scores_per_example_and_candidate.items()): 
 
         top_k = dict(sorted(score_per_candidate_dict.items(), key=operator.itemgetter(1), reverse=True)[:k])
-        print(top_k)
+        #print(top_k)
         if 'Score with correct' in top_k:
             count_true_hits += 1
     
@@ -489,17 +499,21 @@ def get_recall_at_k(k,scores_per_example_and_candidate):
 
 
 
-print("recall_at_5 =",get_recall_at_k(5,scores_per_example_and_candidate)) #Baseline expectation: 5/10 = x for 
-print("recall_at_2 =",get_recall_at_k(2,scores_per_example_and_candidate)) #Baseline expectation: 2/10 = x for 
-print("recall_at_1 =",get_recall_at_k(1,scores_per_example_and_candidate)) #Baseline expectation: 1/10 = x for 
-###############################################################################
+
+print("recall_at_1 =",get_recall_at_k(1,scores_per_example_and_candidate))
+print("recall_at_2 =",get_recall_at_k(2,scores_per_example_and_candidate)) 
+print("recall_at_5 =",get_recall_at_k(5,scores_per_example_and_candidate))  
+print("recall_at_10 =",get_recall_at_k(10,scores_per_example_and_candidate)) #Baseline expectation: 5/10 = x for 
+print("recall_at_15 =",get_recall_at_k(15,scores_per_example_and_candidate)) #Baseline expectation: 2/10 = x for 
+print("recall_at_20 =",get_recall_at_k(20,scores_per_example_and_candidate)) #Baseline expectation: 5/10 = x for 
+
 
 
 ###############################################################################
 # Test with same structure
 ###############################################################################
 test_dataframe_same_structure =validation_dataframe
-def testing_same_structure():
+def testing_same_structure(test_dataframe_same_structure):
     
     test_correct_count = 0
 
@@ -521,7 +535,7 @@ def testing_same_structure():
     
     return test_accuracy
 
-test_accuracy = testing_same_structure()
+test_accuracy = testing_same_structure(test_dataframe_same_structure)
 print("Test accuracy for %d training examples and %d test examples: %.2f" %(len(df_train),len(test_dataframe_same_structure),test_accuracy))
 
 
