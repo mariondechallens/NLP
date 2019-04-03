@@ -10,9 +10,10 @@ import operator
 
 np.random.seed(0)
 # https://github.com/Janinanu/Retrieval-based_Chatbot
-#import os
+import os
 #os.chdir('C:/Users/Sophie HU/Desktop/CentraleSupelec/NLP/HW3/Exercice #3/')
-
+os.chdir('C:/Users/Admin/Documents/GitHub/NLP/Exercice #3/')
+         
 import exo3_bis_stem as data_prep
 #data = 'C:/Users/Sophie HU/Desktop/CentraleSupelec/NLP/HW3/convai2_fix_723.tgz'
 #rep = 'C:/Users/Sophie HU/Desktop/CentraleSupelec/NLP/HW3/'
@@ -42,7 +43,7 @@ def remove_empty(df):
     df_res = df.loc[df['Bool'] == 1]
     return df_res
 
-N=100
+N=200
 #building train data set
 row = []
 row = data_prep.add_rows_train(row,N,list_dial)
@@ -270,7 +271,8 @@ def creating_model(vocab,hidden_size,p_dropout):
     return encoder, dual_encoder
 
 def increase_count(correct_count, score, label):
-    if ((score.data[0][0] >= 0.5) and (label.data[0][0] == 1.0)) or ((score.data[0][0] < 0.5) and (label.data[0][0]  == 0.0)):
+    #if ((score.data[0][0] >= 0.5) and (label.data[0][0] == 1.0)) or ((score.data[0][0] < 0.5) and (label.data[0][0]  == 0.0)):
+    if ((score.data[0][0] >= 0.5) and (label.data[0][0] == 1.0)):
        correct_count +=1  
    
     return correct_count
