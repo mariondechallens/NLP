@@ -20,8 +20,8 @@ def text2sentences2(path):
             sentences.append( l.lower() )
     return sentences
 
-train = text2sentences2(rep+'valid_both_original.txt')
-train_test = text2sentences2(rep+'train_both_original.txt')
+train = text2sentences2(rep+'train_both_original.txt')
+train_test = text2sentences2(rep+'valid_both_original.txt')
 #séparer les dialogues 
 
 def sep_dial(train):
@@ -185,7 +185,8 @@ def dataprocessing(orig):
     
 
 
-N = 20
+N = 2000
+N_test = 1000
 
 #building train data set
 row = []
@@ -202,26 +203,28 @@ df_train['utt']= dataprocessing(df_train_old['utt'])
 
 
 #building test data set
-row2 = []
-row2 = add_rows_test(row2,N,list_dial)    
-df_test_old = pd.DataFrame(data = row2)
+#row2 = []
+#row2 = add_rows_test(row2,N,list_dial)    
+#df_test_old = pd.DataFrame(data = row2)
 
 def stemming_test(df):
     for i in range(df.shape[1]):
         df.iloc[:,i]= dataprocessing(df.iloc[:,i])
     return df
 
-df_test = stemming_test(pd.DataFrame(data = row2))
+#df_test = stemming_test(pd.DataFrame(data = row2))
 
+"""
 row3 = []
 row3 = add_rows_test2(row3,N,list_dial)
-df_test_old2 = pd.DataFrame(data = row3)
-df_test2 = stemming_test(pd.DataFrame(data = row3))
+df_test_old = pd.DataFrame(data = row3)
+df_test = stemming_test(pd.DataFrame(data = row3))
+"""
 
 row4 = []
-row4 = add_rows_test2(row3,N,list_dial_test)
-df_test_old3 = pd.DataFrame(data = row4)
-df_test3 = stemming_test(pd.DataFrame(data = row4))
+row4 = add_rows_test2(row4,N_test,list_dial_test)
+df_test_old = pd.DataFrame(data = row4)
+df_test = stemming_test(pd.DataFrame(data = row4))
 
 
 
@@ -271,7 +274,7 @@ def retrieve_sentence(y_pred,df_test):
         l.append([y_pred[i][0],df_test.iloc[i,1:][y_pred[i][0]]])
     return l
 '''
-def retrieve_sentence2(y_pred,df_test):
+def retrieve_sentence2(y_pred,df_test): 
     l = []
     for i in range(len(y_pred)) :
         l.append([y_pred[i][0]+1,df_test.iloc[i,:df_test.shape[1]-1][y_pred[i][0]+1]])
@@ -289,35 +292,17 @@ for n in [1, 2, 5, 10, 15, 20]:
 l_stem = retrieve_sentence(y,df_test)
 l = retrieve_sentence(y,df_test_old)
 '''
-# train data set 
+# validation data set 
 y_test2 = np.zeros(len(y_random)) + 19
-y2 = [pred.predict(df_test2.context[x], df_test2.iloc[x,:df_test2.shape[1]-1].values) for x in range(len(df_test2))]
+y2 = [pred.predict(df_test.context[x], df_test.iloc[x,:df_test.shape[1]-1].values) for x in range(len(df_test))]
 for n in [1, 2, 5, 10, 15, 20]:
     print('Recall at ',n)
     print(evaluate_recall(y2, y_test2, n))
 
-l_stem2 = retrieve_sentence2(y2,df_test2)
-l2 = retrieve_sentence2(y2,df_test_old2)   
-'''
-s = 0
-for i in range(len(l)):
-    if l[i][1] == l2[i][1]:
-        s = s +1
-s/len(l)  #pas pareil car pas le même contexte (pas la phrase correcte pour y2)
-'''
-#test data set
-y3 = [pred.predict(df_test3.context[x], df_test3.iloc[x,:df_test3.shape[1]-1].values) for x in range(len(df_test3))]
-y4 = y3[len(df_test):]
-y_test4 = np.zeros(len(y4)) + 19
-for n in [1, 2, 5, 10, 15, 20]:
-    print('Recall at ',n)
-    print(evaluate_recall(y4, y_test4, n))
+# retrive which sentence was chosen
+l_stem2 = retrieve_sentence2(y2,df_test)
+l2 = retrieve_sentence2(y2,df_test_old)   
 
-l_stem3 = retrieve_sentence2(y3,df_test3)
-l3 = retrieve_sentence2(y3,df_test_old3)   
-
-l_stem4 = l_stem3[len(df_test):] 
-l4 = l3[len(df_test):]
 # 0.49 the best we can get with this method  pour N = 200 et 2000  
 
     
