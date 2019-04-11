@@ -250,9 +250,10 @@ model.fit(quesns_train_2, answs_train_2,batch_size=32,epochs=30, validation_spli
 # accuracy 0 : does not work :'(
 
 
-# Model prediction : bad
+# Model prediction : bad  (on train data)
 ans_pred = model.predict(quesns_train_2[0:10])
-Questions[0:10]
-Answers[0:10]
+
 for i in range(10):
+    print(Questions[i])
+    print(Answers[i])
     print (decode(ans_pred[i]))  ## bad
