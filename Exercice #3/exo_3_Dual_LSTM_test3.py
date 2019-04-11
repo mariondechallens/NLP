@@ -28,8 +28,13 @@ nb_epochs=2
 # Prepare input for LSTM
 ###############################################################################
 
+
+
+
 train = data_prep.text2sentences2(rep+'train_both_original.txt')
+train_test = data_prep.text2sentences2(rep+'valid_both_original.txt')
 list_dial = data_prep.sep_dial(train)
+list_dial_test = data_prep.sep_dial(train_test)
 
 def remove_empty(df):
     '''remove rows whose utt length equals to 0'''
@@ -61,7 +66,7 @@ df_train['utt']= data_prep.dataprocessing(df_train_old['utt'])
 #building test data set
 row2 = []
 #row2 = data_prep.add_rows_test(row2,N,list_dial)  
-row2 = data_prep.add_rows_test(row2,N,list_dial)  
+row2 = data_prep.add_rows_test(row2,N,list_dial_test)  
 df_test_old = pd.DataFrame(data = row2)
 #df_test_old = remove_empty(df_test_old)
 

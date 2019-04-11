@@ -293,7 +293,7 @@ def text2sentences2(path):
             sentences.append( l.lower() )
     return sentences
 
-train = text2sentences2(rep+'valid_both_original.txt')
+train = text2sentences2(rep+'train_both_original.txt')
 #séparer les dialogues 
 
 def sep_dial(train):
