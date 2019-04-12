@@ -155,7 +155,7 @@ def stemming_test(df):
 class DialogueManager:
     def __init__(self):
         #self.vect = TfidfVectorizer(analyzer='word',ngram_range=(1,1))
-        self.vectorizer = TfidfVectorizer()
+        self.vect = TfidfVectorizer()
 
     def load(self,path):
         with open(path,'rb') as f:
@@ -169,12 +169,12 @@ class DialogueManager:
 
     def train(self,data):
         #self.vect.fit(data)
-        self.vectorizer.fit(np.append(data.context.values,data.utt.values))
+        self.vect.fit(np.append(data.context.values,data.utt.values))
 
     def findBest2(self, context, utterances):
         # Convert context and utterances into tfidf vector
-        vector_context = self.vectorizer.transform([context])
-        vector_doc = self.vectorizer.transform(utterances)
+        vector_context = self.vect.transform([context])
+        vector_doc = self.vect.transform(utterances)
         # The dot product measures the similarity of the resulting vectors
         result = np.dot(vector_doc, vector_context.T).todense()
         result = np.asarray(result).flatten()
@@ -278,19 +278,21 @@ if __name__ == '__main__':
 
     opts = parser.parse_args()
 
-
+# N = 200 ??
+    
     dm = DialogueManager()
     path_train = 'train_both_original.txt'
     df_train_old, df_train = loadDatatrain(path_train,200)
     dm.train(df_train)
-    dm.save(opts.model)
+    dm.save('C:/Users/Admin/Documents/Centrale Paris/3A/OMA/NLP/Exo 3/dm.pkl')
     
     path_test = 'valid_both_original.txt'
-    dm.load(opts.model)
+    dm.load('C:/Users/Admin/Documents/Centrale Paris/3A/OMA/NLP/Exo 3/dm.pkl')
     df_test_old, df_test = loadDatatest(path_test,200)
     pred = [dm.findBest2(df_test.context[x], df_test.iloc[x,:df_test.shape[1]-1].values) for x in range(len(df_test))]
-    print(retrieve_sentence2(pred,df_test_old))
-"""  
+    l = retrieve_sentence2(pred,df_test_old)
+    for i in range(len(l)):
+        print(l[i])
     
     
     if opts.train:
@@ -302,7 +304,9 @@ if __name__ == '__main__':
         dm.load(opts.model)
         df_test_old, df_test = loadDatatest(opts.text,200)
         pred = [dm.findBest2(df_test.context[x], df_test.iloc[x,:df_test.shape[1]-1].values) for x in range(len(df_test))]
-        print(retrieve_sentence2(pred,df_test_old))
+        l = retrieve_sentence2(pred,df_test_old)
+        for i in range(len(l)):
+            print(l[i])
 """  
     if opts.train:
         text = []
