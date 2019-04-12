@@ -294,6 +294,23 @@ if __name__ == '__main__':
     for i in range(len(l)):
         print(l[i])
     
+    # checking recall 
+    def evaluate_recall(y, y_test, k=1):
+        num_examples = float(len(y))
+        num_correct = 0
+        for predictions, label in zip(y, y_test):
+            if label in predictions[:k]:
+                num_correct += 1
+        return num_correct/num_examples
+    
+    y_test = np.zeros(len(pred)) + 19
+    for n in [1, 2, 5, 10, 15, 20]:
+        print('Recall at ',n)
+        print(evaluate_recall(pred, y_test, n))
+
+
+
+
     
     if opts.train:
         df_train_old, df_train = loadDatatrain(opts.text,200)
