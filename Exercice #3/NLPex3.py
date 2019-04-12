@@ -278,7 +278,31 @@ if __name__ == '__main__':
 
     opts = parser.parse_args()
 
+
     dm = DialogueManager()
+    path_train = 'train_both_original.txt'
+    df_train_old, df_train = loadDatatrain(path_train,200)
+    dm.train(df_train)
+    dm.save(opts.model)
+    
+    path_test = 'valid_both_original.txt'
+    dm.load(opts.model)
+    df_test_old, df_test = loadDatatest(path_test,200)
+    pred = [dm.findBest2(df_test.context[x], df_test.iloc[x,:df_test.shape[1]-1].values) for x in range(len(df_test))]
+    print(retrieve_sentence2(pred,df_test_old))
+"""  
+    
+    
+    if opts.train:
+        df_train_old, df_train = loadDatatrain(opts.text,200)
+        dm.train(df_train)
+        dm.save(opts.model)
+    else:
+        assert opts.test,opts.test
+        dm.load(opts.model)
+        df_test_old, df_test = loadDatatest(opts.text,200)
+        pred = [dm.findBest2(df_test.context[x], df_test.iloc[x,:df_test.shape[1]-1].values) for x in range(len(df_test))]
+        print(retrieve_sentence2(pred,df_test_old))
 """  
     if opts.train:
         text = []
@@ -295,14 +319,3 @@ if __name__ == '__main__':
                 print(idx,dm.findBest(utterance,options))
 
 """
-    if opts.train:
-        text = []
-        df_train_old, df_
-        dm.train(text)
-        dm.save(opts.model)
-    else:
-        assert opts.test,opts.test
-        dm.load(opts.model)
-        for _,_, dialogue in loadData(opts.text):
-            for idx, utterance, answer, options in dialogue:
-                print(idx,dm.findBest(utterance,options))
