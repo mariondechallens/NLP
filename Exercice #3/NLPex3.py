@@ -294,7 +294,7 @@ if __name__ == '__main__':
     for i in range(len(l)):
         print(l[i])
     
-    # checking recall 
+    # checking recall on validation set 
     def evaluate_recall(y, y_test, k=1):
         num_examples = float(len(y))
         num_correct = 0
