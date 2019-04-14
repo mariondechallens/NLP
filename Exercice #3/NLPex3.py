@@ -538,9 +538,9 @@ def evaluate_recall(y, y_test, k=1):
     
 
 y_test = np.zeros(len(pred)) + 19
-    for n in [1, 2, 5, 10, 15, 20]:
-        print('Recall at ',n)
-        print(evaluate_recall(pred, y_test, n))
+for n in [1, 2, 5, 10, 15, 20]:
+    print('Recall at ',n)
+    print(evaluate_recall(pred, y_test, n))
 
 if __name__ == '__main__':
 
