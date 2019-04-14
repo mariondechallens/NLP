@@ -510,19 +510,37 @@ dm.train(df_train)
 dm.save('C:/Users/Admin/Documents/Centrale Paris/3A/OMA/NLP/Exo 3/dm.pkl')
 
 path_test = rep + 'valid_both_original.txt'
+list_dial_test = sep_dial(text2sentences2(path_test))
+N_test = len(list_dial_test)
+dm.load('C:/Users/Admin/Documents/Centrale Paris/3A/OMA/NLP/Exo 3/dm.pkl')
+df_test_old, df_test = loadDatatest(path_test,200,list_dial_test)
+pred = [dm.findBest2(df_test.context[x], df_test.iloc[x,:df_test.shape[1]-1].values) for x in range(len(df_test))]
+l = retrieve_sentence2(pred,df_test_old)
+for i in range(len(l)):
+    print(l[i])            
 
-    dm.load('C:/Users/Admin/Documents/Centrale Paris/3A/OMA/NLP/Exo 3/dm.pkl')
+    # checking recall on validation set 
 
-    df_test_old, df_test = loadDatatest(path_test,200)
+def evaluate_recall(y, y_test, k=1):
 
-    pred = [dm.findBest2(df_test.context[x], df_test.iloc[x,:df_test.shape[1]-1].values) for x in range(len(df_test))]
+    num_examples = float(len(y))
 
-    l = retrieve_sentence2(pred,df_test_old)
+    num_correct = 0
 
-    for i in range(len(l)):
+    for predictions, label in zip(y, y_test):
 
-        print(l[i])            
+        if label in predictions[:k]:
 
+            num_correct += 1
+
+    return num_correct/num_examples
+
+    
+
+y_test = np.zeros(len(pred)) + 19
+    for n in [1, 2, 5, 10, 15, 20]:
+        print('Recall at ',n)
+        print(evaluate_recall(pred, y_test, n))
 
 if __name__ == '__main__':
 
@@ -544,50 +562,12 @@ if __name__ == '__main__':
 
     opts = parser.parse_args()
 
-
-
-
-    
-
-    # checking recall on validation set 
-
-    def evaluate_recall(y, y_test, k=1):
-
-        num_examples = float(len(y))
-
-        num_correct = 0
-
-        for predictions, label in zip(y, y_test):
-
-            if label in predictions[:k]:
-
-                num_correct += 1
-
-        return num_correct/num_examples
-
-    
-
-    y_test = np.zeros(len(pred)) + 19
-
-    for n in [1, 2, 5, 10, 15, 20]:
-
-        print('Recall at ',n)
-
-        print(evaluate_recall(pred, y_test, n))
-
-
-
-
-
-
-
-
-
-    
+ 
 
     if opts.train:
+        list_dial_train = sep_dial(text2sentences2(opts.text))
 
-        df_train_old, df_train = loadDatatrain(opts.text,200)
+        df_train_old, df_train = loadDatatrain(opts.text,len(list_dial_train),list_dial_train)
 
         dm.train(df_train)
 
@@ -598,8 +578,10 @@ if __name__ == '__main__':
         assert opts.test,opts.test
 
         dm.load(opts.model)
+        
+        list_dial_test = sep_dial(text2sentences2(opts.text))
 
-        df_test_old, df_test = loadDatatest(opts.text,200)
+        df_test_old, df_test = loadDatatest(opts.text,len(list_dial_test),list_dial_test)
 
         pred = [dm.findBest2(df_test.context[x], df_test.iloc[x,:df_test.shape[1]-1].values) for x in range(len(df_test))]
 
