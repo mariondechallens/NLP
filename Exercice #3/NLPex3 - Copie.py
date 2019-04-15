@@ -390,7 +390,7 @@ def retrieve_sentence2(y_pred,df_test):
     return l 
 
     
-### essayer de mettre moins de trucs en stdout !!!
+### essayer de mettre moins de trucs en stdout ??
 
 
 # test avec les données
