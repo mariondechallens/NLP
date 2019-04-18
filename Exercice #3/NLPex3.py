@@ -286,8 +286,6 @@ class DialogueManager:
 
     def __init__(self):
 
-        #self.vect = TfidfVectorizer(analyzer='word',ngram_range=(1,1))
-
         self.vect = TfidfVectorizer()
 
 
@@ -314,8 +312,6 @@ class DialogueManager:
 
     def train(self,data):
 
-        #self.vect.fit(data)
-
         self.vect.fit(np.append(data.context.values,data.utt.values))
 
 
@@ -339,33 +335,6 @@ class DialogueManager:
         return np.argsort(result, axis=0)[::-1]
 
     
-
-    def findBest(self,utterance,options):
-
-        """
-
-            finds the best utterance out of all those given in options
-
-        :param utterance: a single string
-
-        :param options: a sequence of strings
-
-        :return: returns one of the strings of options
-
-        """
-
-        Xtext = [utterance] + options
-
-        X = self.vect.transform(Xtext)
-
-        X = normalize(X,axis=1,norm='l2')
-
-        idx = np.argmax(X[0] * X[1:,:].T)
-
-
-
-        return options[idx]
-
 
 
 def loadDatatrain(path,N,list_dial):
@@ -422,126 +391,6 @@ def retrieve_sentence2(y_pred,df_test):
 
     
 
-def loadData(path):
-
-    """
-
-        :param path: containing dialogue data of ConvAI (eg:  train_both_original.txt, valid_both_original.txt)
-
-        :return: for each dialogue, yields (description_of_you, description_of_partner, dialogue) where a dialogue
-
-            is a sequence of (utterance, answer, options)
-
-    """
-
-    with open(path) as f:
-
-        descYou, descPartner = [], []
-
-        dialogue = []
-
-        for l in f:
-
-            l=l.strip()
-
-            lxx = l.split()
-
-            idx = int(lxx[0])
-
-            if idx == 1:
-
-                if len(dialogue) != 0:
-
-                    yield descYou,  descPartner, dialogue
-
-                # reinit data structures
-
-                descYou, descPartner = [], []
-
-                dialogue = []
-
-
-
-            if lxx[2] == 'persona:':
-
-                # description of people involved
-
-                if lxx[1] == 'your':
-
-                    description = descYou
-
-                elif lxx[1] == "partner's":
-
-                    description = descPartner
-
-                else:
-
-                    assert 'Error, cannot recognize that persona ({}): {}'.format(lxx[1],l)
-
-                description.append(lxx[3:])
-
-
-
-            else:
-
-                # the dialogue
-
-                lxx = l.split('\t')
-
-                utterance = ' '.join(lxx[0].split()[1:])
-
-                answer = lxx[1]
-
-                options = [o for o in lxx[-1].split('|')]
-
-                dialogue.append( (idx, utterance, answer, options))
-
-
-# test avec les données
-data = 'C:/Users/Admin/Documents/Centrale Paris/3A/OMA/NLP/Exo 3/convai2_fix_723.tar'
-rep = 'C:/Users/Admin/'   
-
-dm = DialogueManager()
-path_train = rep +'train_both_original.txt'
-list_dial_train = sep_dial(text2sentences2(path_train))
-N_train = len(list_dial_train)
-df_train_old, df_train = loadDatatrain(path_train,200,list_dial_train)
-dm.train(df_train)
-dm.save('C:/Users/Admin/Documents/Centrale Paris/3A/OMA/NLP/Exo 3/dm.pkl')
-
-path_test = rep + 'valid_both_original.txt'
-list_dial_test = sep_dial(text2sentences2(path_test))
-N_test = len(list_dial_test)
-dm.load('C:/Users/Admin/Documents/Centrale Paris/3A/OMA/NLP/Exo 3/dm.pkl')
-df_test_old, df_test = loadDatatest(path_test,200,list_dial_test)
-pred = [dm.findBest2(df_test.context[x], df_test.iloc[x,:df_test.shape[1]-1].values) for x in range(len(df_test))]
-l = retrieve_sentence2(pred,df_test_old)
-for i in range(len(l)):
-    print(l[i])            
-
-    # checking recall on validation set 
-
-def evaluate_recall(y, y_test, k=1):
-
-    num_examples = float(len(y))
-
-    num_correct = 0
-
-    for predictions, label in zip(y, y_test):
-
-        if label in predictions[:k]:
-
-            num_correct += 1
-
-    return num_correct/num_examples
-
-    
-
-y_test = np.zeros(len(pred)) + 19
-for n in [1, 2, 5, 10, 15, 20]:
-    print('Recall at ',n)
-    print(evaluate_recall(pred, y_test, n))
-
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
@@ -567,7 +416,7 @@ if __name__ == '__main__':
     if opts.train:
         list_dial_train = sep_dial(text2sentences2(opts.text))
 
-        df_train_old, df_train = loadDatatrain(opts.text,len(list_dial_train),list_dial_train)
+        df_train_old, df_train = loadDatatrain(opts.text,200,list_dial_train)
 
         dm.train(df_train)
 
