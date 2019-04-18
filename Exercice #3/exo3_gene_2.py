@@ -214,69 +214,7 @@ def broback(sentence):
     logger.info("Broback: respond to %s", sentence)
     resp = respond(sentence)
     return resp
-       
-        
-###### tests
-import pytest
-random.seed(0)
-
-def test_random_utterance():
-    sent = "abcd"  # Something unparseable
-    broback(sent)
-test_random_utterance()
-
-def test_basic_greetings():
-    sent = "hello"
-    broback(sent)
-
-test_basic_greetings()
-
-
-def test_contains_reference_to_user():
-    sent = "I went to dinner"
-    broback(sent)
-
-test_contains_reference_to_user()
-
-def test_negs_user():
-    sent = "I am good at Python programming"
-    broback(sent)
-test_negs_user()
-
-def test_contains_reference_to_bot():
-    sent = "You are lame"
-    broback(sent)
-
-test_contains_reference_to_bot()
-
-def test_reuses_subject():
-    sent = "I am a capable programmer"
-    broback(sent)
-
-test_reuses_subject()
-
-def test_strip_offensive_words():
-    FILTER_WORDS.add('snakeperson')
-    sent = "I am a snakeperson"
-    with pytest.raises(UnacceptableUtteranceException):
-        broback(sent)
-
-test_strip_offensive_words()
-
-
-def test_strip_punctuation():
-    sent = "I am a #snakeperson"
-    with pytest.raises(UnacceptableUtteranceException):
-        broback(sent)
-    sent = "@you are funny"
-    with pytest.raises(UnacceptableUtteranceException):
-        broback(sent)
-
-test_strip_punctuation()
-
-def test_unicode():
-    broback(u"☃")  # Unicode snowman                  
-test_unicode()    
+         
 
 ####### Apply to our data
 import pandas as pd
@@ -401,3 +339,10 @@ for i in range(len(df_train_utt)):
     l.append(broback(sent))
 
 df_train_utt['gene_ans'] = l  # nul
+
+for i in range(10):
+    print('correct answer')
+    print(df_train_utt['corr_ans'][i])
+    print('gene answer')
+    print(df_train_utt['gene_ans'][i])
+    
