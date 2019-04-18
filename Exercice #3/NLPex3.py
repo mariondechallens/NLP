@@ -416,7 +416,7 @@ if __name__ == '__main__':
     if opts.train:
         list_dial_train = sep_dial(text2sentences2(opts.text))
 
-        df_train_old, df_train = loadDatatrain(opts.text,200,list_dial_train)
+        df_train_old, df_train = loadDatatrain(opts.text,2000,list_dial_train)
 
         dm.train(df_train)
 
