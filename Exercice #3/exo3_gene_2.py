@@ -6,7 +6,7 @@ Created on Sun Mar 31 09:49:00 2019
 """
 
 # generating utterances 
-# https://lizadaly.com/brobot/    
+
         
 # Sentences we'll respond with if the user greeted us
 import random

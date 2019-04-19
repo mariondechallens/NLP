@@ -9,10 +9,9 @@ import numpy as np
 
 data = 'C:/Users/Admin/Documents/Centrale Paris/3A/OMA/NLP/Exo 3/convai2_fix_723.tar'
 rep = 'C:/Users/Admin/'
-#source :http://www.wildml.com/2016/07/deep-learning-for-chatbots-2-retrieval-based-model-tensorflow/
 
 def text2sentences2(path):
-    # feel free to make a better tokenization/pre-processing
+    
     sentences = []
     with open(path) as f:
         for l in f:
