@@ -14,6 +14,22 @@ from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 from nltk.stem.porter import PorterStemmer
 
+#Dual LSTM
+import torch.nn as nn
+import torch
+import torch.autograd as autograd
+from torch.nn import init
+import torch.nn.utils.rnn 
+
+import datetime
+import operator
+
+# print(torch.__version__) 1.0.1
+##################Les input########################
+
+nb_epochs=2
+np.random.seed(0)
+
 
 def text2sentences2(path):
     sentences = []
@@ -403,12 +419,12 @@ rep = 'C:/Users/Sophie HU/Desktop/CentraleSupelec/NLP/HW3/'
 path_train = rep +'train_both_original.txt'
 list_dial_train = sep_dial(text2sentences2(path_train))
 N_train = len(list_dial_train)
-df_train_old, df_train = loadDatatrain(path_train,N_train-1,list_dial_train)
+df_train_old, df_train = loadDatatrain(path_train,200,list_dial_train)
 
 path_test = rep + 'valid_both_original.txt'
 list_dial_test = sep_dial(text2sentences2(path_test))
 N_test = len(list_dial_test)
-df_test_old, df_test = loadDatatest(path_test,N_test-1,list_dial_test)
+df_test_old, df_test = loadDatatest(path_test,200,list_dial_test)
 
 
 ###############################################################################    
@@ -727,7 +743,6 @@ for name, param in dual_encoder.named_parameters():
         print(name)
 # Create Valisation set:10 pct of train, and train will become first 10 pct of train       
 validation_dataframe=df_train[int(df_train.shape[0]/10)*9:df_train.shape[0]]  
-#df_train = df_train[0:(int(df_train.shape[0]/10)*9-1)]  
 df_train2 = df_train[0:int(df_train.shape[0]/10)*9] 
 
 train_model(df_train2,validation_dataframe,learning_rate = 0.0001, l2_penalty = 0.0001,epochs = nb_epochs)#0.0001,0.0001,100
