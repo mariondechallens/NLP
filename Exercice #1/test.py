@@ -18,6 +18,7 @@ from collections import Counter
 __authors__ = ['Sophie Hu','Marion Favre dEchallens']
 __emails__  = ['jiahui.hu@student-cs.fr','mariondechallens@gmail.com']
 
+"""
 #Data Path
 # import os
 PATH_TO_DATA = "C:/Users/Admin/Documents/Centrale Paris/3A/OMA/Deep Learning/nlp_project/nlp_project/data/"
@@ -34,7 +35,7 @@ with gzip.open(PATH_TO_NLP + 'training-monolingual-news-commentary.gz','r') as f
   for line in fin:        
        sent_train.append(line.lower().split() )
 #####################################################################
-
+"""
 
 ########################
 #Code donnes par le prof
