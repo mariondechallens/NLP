@@ -18,24 +18,6 @@ from collections import Counter
 __authors__ = ['Sophie Hu','Marion Favre dEchallens']
 __emails__  = ['jiahui.hu@student-cs.fr','mariondechallens@gmail.com']
 
-"""
-#Data Path
-# import os
-PATH_TO_DATA = "C:/Users/Admin/Documents/Centrale Paris/3A/OMA/Deep Learning/nlp_project/nlp_project/data/"
-#PATH_TO_NLP = "C:/Users/Sophie HU/Desktop/CentraleSupelec/NLP/NLP-master"
-PATH_TO_NLP = "C:/Users/Admin/Documents/Centrale Paris/3A/OMA/NLP/Exo 1/"
-#filename = os.path.join(PATH_TO_DATA, 'sentences.txt')
-
-
-#######################train file####################################
-import gzip
-sent_train = []
-#with gzip.open('C:/Users/Sophie HU/Desktop/CentraleSupelec/NLP/NLP-master/training-monolingual-news-commentary.tgz','r') as fin:        
-with gzip.open(PATH_TO_NLP + 'training-monolingual-news-commentary.gz','r') as fin:        
-  for line in fin:        
-       sent_train.append(line.lower().split() )
-#####################################################################
-"""
 
 ########################
 #Code donnes par le prof
@@ -374,22 +356,6 @@ class SkipGram:
             pickle_model = pickle.load(file)
         return pickle_model
         
-'''
-####Execution
-sentences = sent_train[100:300]
-sentences = cleaning(sentences)
-
-
-model = SkipGram(sentences)   
-model.train(print_lik= True) #n_iter = 20, adam = false and batch = false by default
-
-model.save(PATH_TO_NLP + 'sg.pkl')
-sg = SkipGram.load(PATH_TO_NLP + 'sg.pkl')
-
-#test file
-sg.similarity_file('test_file.csv',PATH_TO_NLP)
-print(sg.similarity('boy','the'))
-'''
 
 if __name__ == '__main__':
 
